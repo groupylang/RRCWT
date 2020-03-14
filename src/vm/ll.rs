@@ -168,9 +168,9 @@ impl Scanner {
     for _i in 0 .. two.0.len() / 4 {
       tmp.push(Instruction {
         code: two.0[_i * 4],
-        operand0: two.0[_i * 4 + 1] as i8,
-        operand1: two.0[_i * 4 + 2] as i8,
-        operand2: two.0[_i * 4 + 3] as i8
+        op0: two.0[_i * 4 + 1] as i8,
+        op1: two.0[_i * 4 + 2] as i8,
+        op2: two.0[_i * 4 + 3] as i8
       })
     }
     VirtualMachine {
@@ -197,6 +197,7 @@ impl BinaryReader {
       reader: BufReader::new(File::open(extended).expect(&error_message))
     }
   }
+  #[allow(dead_code)]
   fn read_to_end(&mut self) -> Option<Vec<u8>> {
     let mut buf = Vec::with_capacity(32);
     match self.reader.read_to_end(&mut buf) {

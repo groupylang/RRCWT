@@ -1,6 +1,12 @@
 pub mod ll;
 pub mod core;
 pub mod err;
+pub mod jit;
+
+#[cfg(target_os = "windows")]
+pub mod windows;
+#[cfg(target_os = "linux")]
+pub mod linux;
 
 use super::Instruction;
 
