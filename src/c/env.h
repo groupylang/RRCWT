@@ -1,18 +1,18 @@
 #ifndef RCWT_ENV_H
 #define RCWT_ENV_H
 
-#include "vm.h"
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 
-extern instruction* text;
-extern uint8_t* data;
-extern uint32_t* registers;
-extern uint32_t* stack;
-extern uint32_t* heap;
-extern uint32_t stack_pointer;
-extern uint32_t base_pointer;
-extern uint32_t program_counter;
-
-extern void push(uint32_t);
-extern uint32_t pop();
+typedef struct {
+  uint8_t* text;
+  uint8_t* data;
+  uint32_t* registers;
+  uint32_t* stack;
+  uint32_t* heap;
+  uint32_t stack_pointer;
+  uint32_t base_pointer;
+} env;
 
 #endif

@@ -3,12 +3,12 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, BufRead, BufReader};
 use super::VirtualMachine;
-use super::super::Instruction;
 
 macro_rules! read {
-  ($($i: ident: $t: tt),*) => {
-    $(let mut $i = read_inner!($t);)*
-  };
+  ($($i: ident: $t: tt),*) => {$(
+    #[allow(unused_mut)]
+    let mut $i = read_inner!($t);
+  )*};
 }
 
 macro_rules! read_inner {
@@ -141,6 +141,9 @@ impl Scanner {
     });
     // resolve
     let mut us = undefined_table;
+    us = us.into_iter()
+    .filter(|u| !self.symbols.contains_key(&u.symbol_name))
+    .collect::<Vec<UndefinedHeader>>();
     while !us.is_empty() {
       us[0].module_name.pop();
       self.load(&us[0].module_name);
@@ -151,31 +154,18 @@ impl Scanner {
   }
   pub fn setup(&mut self) -> VirtualMachine {
     // TODO verify
-    let offset = self.text.len();
-    let mut body = Vec::from(std::mem::take(&mut self.text));
-    body.append(&mut self.data);
     // patch
-    for _r in std::mem::take(&mut self.relocations) {
-      let s = self.symbols.get(&_r.symbol_name).unwrap();
-      match s.segment_id {
-        0 => body[_r.base_address] = s.base_address as u8,
-        1 => body[_r.base_address] = (s.base_address + offset) as u8,
+    for _r in &self.relocations {
+      let _s = self.symbols.get(&_r.symbol_name).unwrap();
+      match _r.segment_id {
+        0 => self.text[_r.base_address] = _s.base_address as u8,
+        1 => self.data[_r.base_address] = _s.base_address as u8,
         _ => println!("warning | InvalidSegmentId in relocation header")
       }
     }
-    let two = body.split_at(offset);
-    let mut tmp = Vec::with_capacity(32);
-    for _i in 0 .. two.0.len() / 4 {
-      tmp.push(Instruction {
-        code: two.0[_i * 4],
-        op0: two.0[_i * 4 + 1] as i8,
-        op1: two.0[_i * 4 + 2] as i8,
-        op2: two.0[_i * 4 + 3] as i8
-      })
-    }
     VirtualMachine {
-      text: tmp.into_boxed_slice(),
-      data: Box::from(two.1),
+      text: Box::from(std::mem::take(&mut self.text)),
+      data: Box::from(std::mem::take(&mut self.data)),
       .. Default::default()
     }
   }

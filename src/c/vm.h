@@ -3,6 +3,10 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "env.h"
 
 typedef struct {
   uint8_t code;
@@ -10,5 +14,10 @@ typedef struct {
   int8_t op1;
   int8_t op2;
 } instruction;
+
+void v_exec(uint8_t*, uint8_t*, uint32_t);
+
+typedef void(*procedure)(env*);
+procedure jit(char*);
 
 #endif
