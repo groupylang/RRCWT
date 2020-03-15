@@ -2,14 +2,10 @@
 name = "rcwt"
 version = "0.1.0"
 authors = ["sKyrBBit <iamskyrabbit@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 paste = "0.1.7"
-# rustc-llvm-proxy = "0.2.0"
-
-# [dependencies.llvm-sys]
-# version = "80"
-# features = ["no-llvm-linking", "disable-alltargets-init"]
 
 [build-dependencies]
 cc = "*"

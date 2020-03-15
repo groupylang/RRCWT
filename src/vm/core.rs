@@ -18,4 +18,21 @@ impl VirtualMachine {
       v_exec((*self.text).as_ptr(), (*self.data).as_ptr(), self.program_counter as u32);
     }
   }
+  #[no_mangle]
+  pub fn is_hot(&mut self, pc: *const u32) -> u8 {
+    match self.hot_spots.get(&(pc as usize)) {
+      Some(count) if *count > 3 => {
+        1
+      },
+      Some(count) => {
+        self.hot_spots.insert(pc as usize, *count + 1);
+        0
+      },
+      None => {
+        self.hot_spots.insert(pc as usize, 1);
+        0
+      }
+    }
+  }
+
 }

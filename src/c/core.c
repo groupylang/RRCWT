@@ -1,5 +1,4 @@
 #include "vm.h"
-#include "env.h"
 
 void push(env* e, uint32_t item) {
   e->stack[e->stack_pointer++] = item;
@@ -11,13 +10,13 @@ uint32_t pop(env* e) {
 void v_exec(uint8_t* text, uint8_t* data, uint32_t entry_point) {
   // initialize
   env e = {
-    text,
-    data,
-    (uint32_t*) calloc(1024, 4),
-    (uint32_t*) calloc(1024, 4),
-    (uint32_t*) calloc(1024, 4),
-    0,
-    0
+    /* text         */ text,
+    /* data         */ data,
+    /* registers    */ (uint32_t*) calloc(1024, 4),
+    /* stack        */ (uint32_t*) calloc(1024, 4),
+    /* heap         */ (uint32_t*) calloc(1024, 4),
+    /* stack_poiner */ 0,
+    /* base_poiner  */ 0
   };
   uint8_t jit_flag = 0;
   char jit_str[1024]; // TODO
@@ -289,14 +288,15 @@ void v_exec(uint8_t* text, uint8_t* data, uint32_t entry_point) {
 			return;
 		} NEXT;
     CASE(CALL) {
+      jit_flag = 1; // is_hot(pc);
       push(&e, e.base_pointer);
       e.base_pointer = e.stack_pointer;
       e.stack_pointer += i.op0;
       push(&e, (uint8_t*)++pc - text);
       pc = (instruction*) (text + i.op2);
-      // jit
-      jit_flag = 1;
-      sprintf(jit_str, "#include \"../src/c/env.h\"\nvoid f(env* e) {\n");
+      if (jit_flag) {
+        sprintf(jit_str, "#include \"../src/c/env.h\"\nvoid f(env* e) {\n");
+      }
     } JUMP;
     CASE(RET) {
       pc = (instruction*) (text + pop(&e));
