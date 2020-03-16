@@ -6,7 +6,6 @@ fn main() {
   .flag("-Wall")
   .flag("-Wextra")
   .file("src/c/core.c")
-  .file("src/c/native.c")
   .include("src/c")
   .compile("core")
 }
@@ -16,7 +15,6 @@ fn main() {
   .warnings(true)
   .flag("/Wall")
   .file("src/c/core.c")
-  .file("src/c/native.c")
   .include("src/c")
   .compile("core")
 }

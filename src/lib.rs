@@ -1,3 +1,4 @@
+extern crate libloading;
 pub mod vm;
 
 // #[cfg(target_os = "linux")]
