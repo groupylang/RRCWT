@@ -305,7 +305,7 @@ void v_exec(struct VirtualMachine* vm, uint8_t* text, uint8_t* data, uint32_t en
       // jit
       if (jit_flag) {
         sprintf(jit_str, "%s\treturn;\n}\n", jit_str);
-        jit(vm, pc - 1, jit_str);
+        jit(vm, (uint32_t*)pc - 1, jit_str);
         jit_flag = 0;
       }
     } JUMP;

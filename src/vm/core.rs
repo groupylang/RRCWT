@@ -6,6 +6,7 @@ use std::io::{Write, BufWriter};
 use std::fs::File;
 use std::process::Command;
 use libloading::{Library, Symbol};
+use std::ffi::CStr;
 
 impl VirtualMachine {
   pub fn scan(file_name: &str) -> VirtualMachine {
@@ -42,7 +43,6 @@ impl VirtualMachine {
   #[cfg(target_os="windows")]
   #[no_mangle]
   pub fn jit(&mut self, pc: *const u32, jit_str: *const i8) {
-    use std::ffi::CStr;
     // compile
     let mut writer = BufWriter::new(File::create("tmp/f.c").expect("error | FileNotFound: f.c"));
     writer.write("#include <windows.h>\nBOOL APIENTRY DllMain(HANDLE h, DWORD d, LPVOID l) {\n\treturn TRUE;\n}\n".as_bytes()).unwrap();
@@ -72,8 +72,7 @@ impl VirtualMachine {
   }
   #[cfg(target_os="linux")]
   #[no_mangle]
-  pub fn jit() {
-    use std::ffi::CStr;
+  pub fn jit(&mut self, pc: *const u32, jit_str: *const i8) {
     // compile
     let mut writer = BufWriter::new(File::create("tmp/f.c").expect("error | FileNotFound: f.c"));
     writer.write_all(unsafe { CStr::from_ptr(jit_str) }.to_bytes()).unwrap();
