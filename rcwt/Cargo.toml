@@ -1,0 +1,13 @@
+[package]
+name = "rcwt"
+version = "0.1.0"
+authors = ["sKyrBBit <iamskyrabbit@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+paste = "0.1.7"
+libloading = "0.5.2"
+rlisp = { path = "../rlisp" }
+
+[build-dependencies]
+cc = "*"

@@ -1,8 +1,8 @@
 use super::{Loc, TokenKind};
-use super::lexer::{LexErrorKind, LexError};
+use super::lexer::LexError;
 use super::parser::ParseError;
 use super::error::Error;
-use super::interpreter::{InterpreterErrorKind, InterpreterError};
+use super::interpreter::InterpreterError;
 use std::fmt;
 
 impl fmt::Display for TokenKind {
@@ -28,7 +28,7 @@ impl fmt::Display for Loc {
 
 impl fmt::Display for LexError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    use self::LexErrorKind::*;
+    use super::lexer::LexErrorKind::*;
     let loc = &self.loc;
     match self.value {
       InvalidChar(c) => write!(f, "{}: invalid char '{}'", loc, c),
@@ -67,7 +67,7 @@ impl fmt::Display for Error {
 
 impl fmt::Display for InterpreterError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    use self::InterpreterErrorKind::*;
+    use super::interpreter::InterpreterErrorKind::*;
     match self.value {
       DivisionByZero => write!(f, "division by zero"),
     }

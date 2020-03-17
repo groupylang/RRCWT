@@ -3,7 +3,7 @@ use super::lexer::{LexError, lex};
 use super::parser::{ParseError, parse};
 use std::str::FromStr;
 use std::error::Error as StdError;
-use super::interpreter::{InterpreterErrorKind, InterpreterError};
+use super::interpreter::InterpreterError;
 
 
 impl FromStr for Ast {
@@ -56,7 +56,7 @@ impl Error {
   pub fn show_diagnostic(&self, input: &str) {
     use self::Error::*;
     use self::ParseError as P;
-    let (e, loc): (&StdError, Loc) = match self {
+    let (e, loc): (&dyn StdError, Loc) = match self {
       Lexer(e) => (e, e.loc.clone()),
       Parser(e) => {
         let loc = match e {
@@ -86,7 +86,7 @@ pub fn show_trace<E: StdError>(e: E) {
 
 impl StdError for InterpreterError {
   fn description(&self) -> &str {
-    use self::InterpreterErrorKind::*;
+    use super::interpreter::InterpreterErrorKind::*;
     match self.value {
       DivisionByZero => "the right hand expression of the division evaluates to zero",
     }

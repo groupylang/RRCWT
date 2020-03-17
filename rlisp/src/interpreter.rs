@@ -1,4 +1,4 @@
-use super::{Annot, UniOpKind, UniOp, BinOpKind, BinOp, AstKind, Ast};
+use super::{Annot, UniOp, BinOp, Ast};
 use super::error::print_annot;
 
 pub struct Interpreter;
@@ -16,7 +16,7 @@ impl Interpreter {
   }
 
   pub fn eval(&mut self, expr: &Ast) -> Result<i64, InterpreterError> {
-    use self::AstKind::*;
+    use super::AstKind::*;
     match expr.value {
       Num(n) => Ok(n as i64),
       UniOp { ref op, ref e } => {
@@ -33,14 +33,14 @@ impl Interpreter {
   }
 
   fn eval_uniop(&mut self, op: &UniOp, n: i64) -> i64 {
-    use self::UniOpKind::*;
+    use super::UniOpKind::*;
     match op.value {
       Plus => n,
       Minus => -n,
     }
   }
   fn eval_binop(&mut self, op: &BinOp, l: i64, r: i64) -> Result<i64, InterpreterErrorKind> {
-    use self::BinOpKind::*;
+    use super::BinOpKind::*;
     match op.value {
       Add => Ok(l + r),
       Sub => Ok(l - r),

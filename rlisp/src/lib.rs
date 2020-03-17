@@ -117,6 +117,7 @@ pub enum AstKind {
 pub type Ast = Annot<AstKind>;
 
 impl Ast {
+  #[allow(dead_code)]
   fn num(n: u64, loc: Loc) -> Self {
     Self::new(AstKind::Num(n), loc)
   }

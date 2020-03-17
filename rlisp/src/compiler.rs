@@ -1,4 +1,4 @@
-use super::{UniOpKind, UniOp, BinOpKind, BinOp, AstKind, Ast};
+use super::{UniOp, BinOp, Ast};
 
 pub struct IrCompiler {
   tmp_count: isize
@@ -17,13 +17,13 @@ impl IrCompiler {
   }
 
   fn compile_inner(&mut self, expr: &Ast, buf: &mut String) -> String {
-    use self::AstKind::*;
+    use super::AstKind::*;
     match expr.value {
       Num(n) => n.to_string(),
       UniOp { ref op, ref e } => {
         let _e = self.compile_inner(e, buf);
+        let tmp_name = format!("${}", self.tmp_count.to_string());
         self.tmp_count += 1;
-        let tmp_name = format!("{}{}", '$', self.tmp_count.to_string());
         buf.push_str(&tmp_name);
         buf.push('=');
         buf.push_str(self.compile_uniop(op));
@@ -34,8 +34,8 @@ impl IrCompiler {
       BinOp { ref op, ref l, ref r, } => {
         let _l = self.compile_inner(l, buf);
         let _r = self.compile_inner(r, buf);
+        let tmp_name = format!("${}", self.tmp_count.to_string());
         self.tmp_count += 1;
-        let tmp_name = format!("{}{}", '$', self.tmp_count.to_string());
         buf.push_str(&tmp_name);
         buf.push_str("=");
         buf.push_str(&_l);
@@ -48,14 +48,14 @@ impl IrCompiler {
   }
 
   fn compile_uniop(&mut self, op: &UniOp) -> &str {
-    use self::UniOpKind::*;
+    use super::UniOpKind::*;
     match op.value {
       Plus => "+",
       Minus => "-",
     }
   }
   fn compile_binop(&mut self, op: &BinOp) -> &str {
-    use self::BinOpKind::*;
+    use super::BinOpKind::*;
     match op.value {
       Add => "+",
       Sub => "-",

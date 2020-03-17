@@ -1,8 +1,9 @@
 extern crate rcwt;
-use rcwt::front_end::Ast;
-use rcwt::front_end::error::show_trace;
-use rcwt::front_end::interpreter::Interpreter;
-use rcwt::front_end::compiler::IrCompiler;
+extern crate rlisp;
+use rlisp::Ast;
+use rlisp::error::show_trace;
+use rlisp::interpreter::Interpreter;
+use rlisp::compiler::IrCompiler;
 use rcwt::vm::VirtualMachine;
 
 use std::io;
@@ -48,6 +49,10 @@ fn main() {
       println!("{}", n);
       let ir = compiler.compile(&ast);
       println!("{}", ir);
+      use std::io::{Write, BufWriter};
+      use std::fs::File;
+      let mut writer = BufWriter::new(File::create("../tmp/tmp.ir").unwrap());
+      writer.write(ir.as_bytes()).unwrap();
     } else {
       break;
     }
