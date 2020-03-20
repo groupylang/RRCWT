@@ -119,7 +119,7 @@ void v_exec(struct VirtualMachine* vm, uint8_t* text, uint8_t* data, uint32_t en
       /* f0 */ &&L_NOP,   /* f1 */ &&L_NOP,   /* f2 */ &&L_NOP,   /* f3 */ &&L_NOP,
 	    /* f4 */ &&L_NOP,   /* f5 */ &&L_NOP,   /* f6 */ &&L_NOP,   /* f7 */ &&L_NOP,
       /* f8 */ &&L_NOP,   /* f9 */ &&L_NOP,   /* fa */ &&L_NOP,   /* fb */ &&L_NOP,
-      /* fc */ &&L_NOP,   /* fd */ &&L_NOP,   /* fe */ &&L_NOP,   /* ff */ &&L_SOUT,
+      /* fc */ &&L_NOP,   /* fd */ &&L_NOP,   /* fe */ &&L_IOUT,  /* ff */ &&L_SOUT,
   };
 #else
   #define NOP   0x00
@@ -154,6 +154,7 @@ void v_exec(struct VirtualMachine* vm, uint8_t* text, uint8_t* data, uint32_t en
   #define NEW   0x50
   #define SET   0x51
   #define GET   0x52
+  #define IOUT  0xfe
   #define SOUT  0xff
 #endif
 
@@ -332,6 +333,9 @@ void v_exec(struct VirtualMachine* vm, uint8_t* text, uint8_t* data, uint32_t en
       e.registers[i.op2] = e.heap[e.registers[i.op0] + i.op1];
     } NEXT;
 
+    CASE(IOUT) {
+      printf("%d", e.registers[i.op0]);
+    } NEXT;
     CASE(SOUT) {
       printf("%s", e.data + e.registers[i.op0]);
       if (jit_flag) {

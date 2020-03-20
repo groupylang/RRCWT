@@ -71,7 +71,7 @@ fn compile(file_name: &str) {
   use std::fs::File;
   let mut compiler = IrCompiler::new();
 
-  let reader = BufReader::new(File::open(format!("{}.grp", file_name)).expect("error | FileNotFound"));
+  let reader = BufReader::new(File::open(format!("{}.lisp", file_name)).expect("error | FileNotFound"));
   let mut lines = reader.lines();
   if let Some(Ok(line)) = lines.next() {
     let ast = match line.parse::<Ast>() {
