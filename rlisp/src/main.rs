@@ -66,36 +66,30 @@ fn interp() {
   }
 }
 
-fn compile() {
-  use std::io::{stdin, BufRead, BufReader};
+fn compile(file_name: &str) {
+  use std::io::{BufRead, BufReader};
+  use std::fs::File;
   let mut compiler = IrCompiler::new();
 
-  let stdin = stdin();
-  let stdin = stdin.lock();
-  let stdin = BufReader::new(stdin);
-  let mut lines = stdin.lines();
-
-  loop {
-    prompt("> ").unwrap();
-    if let Some(Ok(line)) = lines.next() {
-      let ast = match line.parse::<Ast>() {
-        Ok(ast) => ast,
-        Err(e) => {
-          e.show_diagnostic(&line);
-          show_trace(e);
-          continue;
-        }
-      };
-      println!("{:?}", ast);
-      let ir = compiler.compile(&ast);
-      println!("{}", ir);
-      // use std::io::{Write, BufWriter};
-      // use std::fs::File;
-      // let mut writer = BufWriter::new(File::create("tmp/tmp.ir").unwrap());
-      // writer.write(ir.as_bytes()).unwrap();
-    } else {
-      break;
-    }
+  let reader = BufReader::new(File::open(format!("{}.grp", file_name)).expect("error | FileNotFound"));
+  let mut lines = reader.lines();
+  if let Some(Ok(line)) = lines.next() {
+    let ast = match line.parse::<Ast>() {
+      Ok(ast) => ast,
+      Err(e) => {
+        e.show_diagnostic(&line);
+        show_trace(e);
+        return;
+      }
+    };
+    println!("{:?}", ast);
+    let ir = compiler.compile(&ast);
+    println!("{:?}", ir);
+    println!("{}", ir);
+    use std::io::{Write, BufWriter};
+    let mut writer = BufWriter::new(File::create(format!("{}.wc", file_name)).unwrap());
+    writer.write("RCWT".as_bytes()).unwrap();
+    writer.write(ir.gen().as_slice()).unwrap();
   }
 }
 
@@ -103,10 +97,10 @@ fn main() {
   use std::env;
   let args: Vec<String> = env::args().collect();
   match args.len() {
-    1 => help(),
-    2 if args[1].as_str().eq_ignore_ascii_case("-h") => help(),
-    2 if args[1].as_str().eq_ignore_ascii_case("-v") => version(),
-    2 if args[1].as_str().eq_ignore_ascii_case("-i") => interp(),
-    _ => compile(),
+    2 if args[1].eq(&String::from("-h")) => help(),
+    2 if args[1].eq(&String::from("-v")) => version(),
+    2 if args[1].eq(&String::from("-i")) => interp(),
+    2 => compile(&args[1]),
+    _ => help()
   };
 }

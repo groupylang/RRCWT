@@ -1,15 +1,6 @@
 use std::fs::File;
 use std::io::{Write, BufWriter};
 
-pub fn gen_c() {
-  let mut writer = BufWriter::new(File::create("tmp/test.c").unwrap());
-  writer.write("int main(void) {\n".as_bytes()).unwrap();
-  writer.write("\tfor (int i = 0; i < 5; i++) {\n".as_bytes()).unwrap();
-  writer.write("\t\tsout(\"Loop\");\n".as_bytes()).unwrap();
-  writer.write("\t}\n".as_bytes()).unwrap();
-  writer.write("}\n".as_bytes()).unwrap();
-}
-
 pub fn gen_hir() {
   let mut writer = BufWriter::new(File::create("tmp/test.hir").unwrap());
   writer.write("<text>\n".as_bytes()).unwrap();
@@ -52,20 +43,54 @@ pub fn gen_lir() {
 }
 
 pub fn gen_wc() {
-  let mut writer = BufWriter::new(File::create("tmp/test.wc").unwrap());
-  writer.write("RCWT".as_bytes()).unwrap();
-  writer.write("\0\0".as_bytes()).unwrap(); // text_size
-  writer.write("\0\0".as_bytes()).unwrap(); // data_size
-  writer.write("\0\0".as_bytes()).unwrap(); // defined_count
-  writer.write("\0\0".as_bytes()).unwrap(); // undefined_count
-  writer.write("\0\0".as_bytes()).unwrap(); // relocation_count
-  // defined_table: [DefinedHeader; defined_count],
-  // undefined_table: [UndefinedHeader; undefined_count],
-  // relocations: [RelocationHeader; relocation_count],
-  writer.write("20 01 00 00".as_bytes()).unwrap();
-  writer.write("\0\0\0\0".as_bytes()).unwrap();
-  writer.write("\0\0\0\0".as_bytes()).unwrap();
-  writer.write("\0\0\0\0".as_bytes()).unwrap();
-  writer.write("\0\0\0\0".as_bytes()).unwrap();
-  writer.write("Loop\0".as_bytes()).unwrap();
+  // let mut writer = BufWriter::new(File::create("tmp/test.wc").unwrap());
+  // writer.write("RCWT".as_bytes()).unwrap();
+  // writer.write("\0\0".as_bytes()).unwrap(); // text_size
+  // writer.write("\0\0".as_bytes()).unwrap(); // data_size
+  // writer.write("\0\0".as_bytes()).unwrap(); // defined_count
+  // writer.write("\0\0".as_bytes()).unwrap(); // undefined_count
+  // writer.write("\0\0".as_bytes()).unwrap(); // relocation_count
+  // // defined_table: [DefinedHeader; defined_count],
+  // // undefined_table: [UndefinedHeader; undefined_count],
+  // // relocations: [RelocationHeader; relocation_count],
+  // writer.write("20 01 00 00".as_bytes()).unwrap();
+  // writer.write("\0\0\0\0".as_bytes()).unwrap();
+  // writer.write("\0\0\0\0".as_bytes()).unwrap();
+  // writer.write("\0\0\0\0".as_bytes()).unwrap();
+  // writer.write("\0\0\0\0".as_bytes()).unwrap();
+  // writer.write("Loop\0".as_bytes()).unwrap();
+
+  // let entry = BasicBlock { label: String::from("entry"), block: vec![Instruction {
+  //   code: 0x20,
+  //   kind: InstrKind::RRI { op0: 0x01, op1: 0x00, op2: 0x01 },
+  //   mnemonic: String::from("addi")
+  // },
+  // Instruction {
+  //   code: 0x20,
+  //   kind: InstrKind::RRI { op0: 0x02, op1: 0x00, op2: 0x02 },
+  //   mnemonic: String::from("addi")
+  // },
+  // Instruction {
+  //   code: 0x20,
+  //   kind: InstrKind::RRI { op0: 0x03, op1: 0x00, op2: 0x03 },
+  //   mnemonic: String::from("addi")
+  // },
+  // Instruction {
+  //   code: 0x12,
+  //   kind: InstrKind::RRR { op0: 0x04, op1: 0x02, op2: 0x03 },
+  //   mnemonic: String::from("mulr")
+  // },
+  // Instruction {
+  //   code: 0x10,
+  //   kind: InstrKind::RRR { op0: 0x05, op1: 0x01, op2: 0x04 },
+  //   mnemonic: String::from("addr")
+  // },
+  // Instruction {
+  //   code: 0x41,
+  //   kind: InstrKind::SYS,
+  //   mnemonic: String::from("exit")
+  // }]};
+  // println!("{:?}", entry);
+  // println!("RCWT");
+  // println!("{}", entry);
 }
