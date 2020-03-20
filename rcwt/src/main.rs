@@ -22,9 +22,9 @@ fn main() {
   use std::env;
   let args: Vec<String> = env::args().collect();
   match args.len() {
-    1 => help(),
     2 if args[1].eq(&String::from("-h")) => help(),
     2 if args[1].eq(&String::from("-v")) => version(),
-    _ => VirtualMachine::scan(&args[1]).execute(),
+    2 => VirtualMachine::scan(&args[1]).execute(),
+    _ => help(),
   };
 }
