@@ -7,7 +7,7 @@ use rlisp::compiler::IrCompiler;
 use std::io;
 
 fn help() {
-  println!("put paths of files to compile or 1 option from the ones below:");
+  println!("select a file to compile or 1 option from the ones below:");
   println!("  \"-h\": show help");
   println!("  \"-v\": show version");
   println!("  \"-i\": use interpreter");

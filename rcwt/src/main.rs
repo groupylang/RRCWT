@@ -4,7 +4,7 @@ use rcwt::vm::VirtualMachine;
 
 
 fn help() {
-  println!("put paths of files to execute or 1 option from the ones below:");
+  println!("select a file to execute or 1 option from the ones below:");
   println!("  \"-h\": show help");
   println!("  \"-v\": show version");
 }

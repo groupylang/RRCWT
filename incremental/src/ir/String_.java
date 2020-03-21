@@ -1,0 +1,20 @@
+package ir;
+
+public class String_ implements Operand {
+    final String value;
+    public String_(final String value) {
+        this.value = value;
+    }
+    @Override
+    public java.lang.String build() {
+        return null; // TODO
+    }
+    @Override
+    public int toWC() {
+        return 0x00;
+    }
+    @Override
+    public String toAssembly() {
+        return "";
+    }
+}
