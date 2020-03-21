@@ -1,7 +1,6 @@
 package middle_end;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,13 +29,13 @@ public class Function {
     }
     void optimize() {
         list = list.stream()
-                .filter(Instruction::necessary)
+                .filter(Instruction::isNecessary)
                 .collect(Collectors.toList());
     }
-    void build() {
-        Builder.append(".global " + name + "\n" + name + ":\n");
+    public void toAssembly() {
+        AssemblyBuilder.append(".global " + name + "\n" + name + ":\n");
         for (Instruction instruction : list) {
-            instruction.build();
+            instruction.toAssembly();
         }
     }
 }

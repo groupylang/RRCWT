@@ -1,15 +1,15 @@
 // short comment
 /* long comment */
-Number factorial(Number n) {
+Integer factorial(Integer n) {
     if (n) {
         return n * factorial(n - 1);
     }
     return 1;
 }
-Number main() {
-    Number a;
-    Number b;
-    Number c;
+Integer main() {
+    Integer a;
+    Integer b;
+    Integer c;
     a = 2;
     b = 4;
     c = 0 + 1 * a;

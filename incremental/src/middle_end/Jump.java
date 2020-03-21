@@ -15,16 +15,16 @@ public class Jump extends Instruction {
         this.label = label;
     }
     @Override
-    void build() {
+    void toAssembly() {
         switch (type) {
             case CALL:
                 if (left != null) {
-                    Builder.append("  mov  " + registers[0].toString() + ", " + left.toString() + "\n");
+                    AssemblyBuilder.append("  mov  " + registers[0].toString() + ", " + left.toString() + "\n");
                     if (right != null) {
-                        Builder.append("  mov  " + registers[1].toString() + ", " + right.toString() + "\n");
+                        AssemblyBuilder.append("  mov  " + registers[1].toString() + ", " + right.toString() + "\n");
                     }
                 }
-                Builder.append("  call " + label.toString() + "\n");
+                AssemblyBuilder.append("  call " + label.toString() + "\n");
                 break;
         }
     }

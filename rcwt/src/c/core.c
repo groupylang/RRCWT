@@ -7,7 +7,7 @@ uint32_t pop(env* e) {
   return e->stack[--e->stack_pointer];
 }
 
-void v_exec(struct VirtualMachine* vm, uint8_t* text, uint8_t* data, uint32_t entry_point) {
+uint8_t v_exec(struct VirtualMachine* vm, uint8_t* text, uint8_t* data, uint32_t entry_point) {
   // initialize
   env e = {
     /* text         */ text,
@@ -286,7 +286,7 @@ void v_exec(struct VirtualMachine* vm, uint8_t* text, uint8_t* data, uint32_t en
       pc += i.op0;
     } JUMP;
     CASE(EXIT) {
-			return;
+			return i.op0;
 		} NEXT;
     CASE(CALL) {
       jit_flag = is_hot(vm, pc);
@@ -344,4 +344,5 @@ void v_exec(struct VirtualMachine* vm, uint8_t* text, uint8_t* data, uint32_t en
       }
     } NEXT;
   } END_DISPATCH;
+  return 0;
 }

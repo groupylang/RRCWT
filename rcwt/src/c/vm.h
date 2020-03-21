@@ -17,7 +17,7 @@ typedef struct {
 
 struct VirtualMachine;
 
-void v_exec(struct VirtualMachine*, uint8_t*, uint8_t*, uint32_t);
+uint8_t v_exec(struct VirtualMachine*, uint8_t*, uint8_t*, uint32_t);
 
 uint8_t is_hot(struct VirtualMachine*, instruction*);
 typedef void(*procedure)(env*);

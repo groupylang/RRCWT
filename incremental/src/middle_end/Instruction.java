@@ -9,42 +9,42 @@ public class Instruction {
         this.left = left;
         this.right = right;
     }
-    void build() {
+    void toAssembly() {
         switch (type) {
             case ADD:
-                Builder.append("  add  " + left.toString() + ", " + right.toString() + "\n");
+                AssemblyBuilder.append("  add  " + left.toString() + ", " + right.toString() + "\n");
                 break;
             case SUB:
-                Builder.append("  sub  " + left.toString() + ", " + right.toString() + "\n");
+                AssemblyBuilder.append("  sub  " + left.toString() + ", " + right.toString() + "\n");
                 break;
             case MUL:
-                Builder.append("  imul  " + left.toString() + ", " + right.toString() + "\n");
+                AssemblyBuilder.append("  imul  " + left.toString() + ", " + right.toString() + "\n");
                 break;
             case DIV:
-                Builder.append("  cqo\n  idiv  " + left.toString() + ", " + right.toString() + "\n");
+                AssemblyBuilder.append("  cqo\n  idiv  " + left.toString() + ", " + right.toString() + "\n");
                 break;
             case PUSH:
-                Builder.append("  push " + left.toString() + "\n");
+                AssemblyBuilder.append("  push " + left.toString() + "\n");
                 break;
             case POP:
                 // register or memory
-                Builder.append("  pop  " + left.toString() + "\n");
+                AssemblyBuilder.append("  pop  " + left.toString() + "\n");
                 break;
             case MOV:
-                Builder.append("  mov  " + left.toString() + ", " +right.toString() + "\n");
+                AssemblyBuilder.append("  mov  " + left.toString() + ", " +right.toString() + "\n");
                 break;
             case RET:
-                Builder.append("  ret\n");
+                AssemblyBuilder.append("  ret\n");
                 break;
             case OUT:
-                Builder.append("  out  " + left.toString() + "\n");
+                AssemblyBuilder.append("  out  " + left.toString() + "\n");
                 break;
             case NOP:
-                Builder.append("  nop\n");
+                AssemblyBuilder.append("  nop\n");
                 break;
         }
     }
-    boolean necessary() {
+    boolean isNecessary() {
         switch (type) {
             case NOP:
                 return false;

@@ -1,4 +1,4 @@
-int main() {
+Integer main() {
     print "hello world";
     return 0;
 }

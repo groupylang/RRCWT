@@ -17,12 +17,14 @@ impl VirtualMachine {
   }
   pub fn execute(&mut self) {
     #[link(name="core")]
+    #[allow(improper_ctypes)]
     extern "C" {
-      fn v_exec(vm: *const VirtualMachine, text: *const u8, data: *const u8, entry_point: u32);
+      fn v_exec(vm: *const VirtualMachine, text: *const u8, data: *const u8, entry_point: u32) -> u8;
     }
-    unsafe {
-      v_exec(self, (*self.text).as_ptr(), (*self.data).as_ptr(), self.program_counter as u32);
-    }
+    let status = unsafe {
+      v_exec(self, (*self.text).as_ptr(), (*self.data).as_ptr(), self.program_counter as u32)
+    };
+    println!("log | VMExitWithStatus: {}", status);
   }
   #[no_mangle]
   pub fn is_hot(&mut self, pc: *const u32) -> u8 {

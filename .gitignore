@@ -1,4 +1,5 @@
 .vscode/
 tmp/
 target/
+javaout/
 Cargo.lock

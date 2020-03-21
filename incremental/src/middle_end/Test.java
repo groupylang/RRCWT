@@ -65,7 +65,7 @@ public class Test {
                         3,
                         instructions_main)
         );
-        new Module(function_declarations).build();
-        System.out.println(Builder.build());
+        new Module(function_declarations).toAssembly();
+        System.out.println(AssemblyBuilder.build());
     }
 }

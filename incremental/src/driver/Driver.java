@@ -5,6 +5,9 @@ import front_end.RecursiveDescentParser;
 import front_end.ParsingException;
 import io.Reader;
 import io.Writer;
+import middle_end.AssemblyBuilder;
+import middle_end.Function;
+import middle_end.Module;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -57,6 +60,11 @@ public class Driver {
         return ast_result.stream()
                 .map(ast.FunctionDeclare::toIR)
                 .collect(Collectors.toList());
+    }
+    static middle_end.Module ast2ir_mid(List<ast.FunctionDeclare> ast_result) {
+        return new middle_end.Module(ast_result.stream()
+                .map(ast.FunctionDeclare::gen)
+                .collect(Collectors.toList()));
     }
     static void put_ir(String file_name, List<ir.Function> ir_result, String[] strings) throws IOException {
         StringBuilder builder = new StringBuilder();
@@ -122,6 +130,9 @@ public class Driver {
             else {
                 ParserResult ast_result = grp2ast(args[0]);
                 List<ir.Function> ir_result = ast2ir(ast_result.ast);
+//                middle_end.Module ir_mid_result = ast2ir_mid(ast_result.ast);
+//                ir_mid_result.toAssembly();
+//                System.out.println(AssemblyBuilder.build());
                 ir2wc_and_put(args[0], ir_result, ast_result.strings);
                 ir2assembly_and_put(args[0], ir_result, ast_result.strings);
             }

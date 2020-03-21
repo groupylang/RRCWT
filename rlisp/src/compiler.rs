@@ -14,7 +14,7 @@ impl IrCompiler {
     let mut block = Vec::with_capacity(32);
     let _expr = self.compile_inner(expr, &mut block);
     block.push(Instruction::iout(_expr));
-    block.push(Instruction::exit());
+    block.push(Instruction::exit(0x00));
     BasicBlock { label: String::from("main"), block }
   }
 
@@ -125,7 +125,6 @@ enum InstrKind {
   // store load
   IF { cond: Condition, dst: String },
   NEW { op0: i8, size: i16 },
-  SYS,
   R { op0: i8 }
 }
 
@@ -143,7 +142,6 @@ impl fmt::Debug for Instruction {
       RRI { op0, op1, op2 } => write!(f, "\tr{} = {} r{}, 0x{:02X}", op0, self.mnemonic, op1, op2),
       IF { cond, dst } => write!(f, "\t{} ({:?}) ${}", self.mnemonic, cond, dst),
       NEW { op0, size } => write!(f, "\tr{} = {} 0x{:04X}", op0, self.mnemonic, size),
-      SYS => write!(f, "\t{}", self.mnemonic),
       R { op0 } => write!(f, "\t{} r{}", self.mnemonic, op0),
       // _ => { println!("error | InvalidInstrKind"); Err(fmt::Error) }
     }
@@ -167,7 +165,6 @@ impl fmt::Display for Instruction {
         }
       },
       NEW { op0, size } => write!(f, "{:02X}{:02X}{:04X}", self.code, op0, size),
-      SYS => write!(f, "{:02X}000000", self.code),
       R { op0 }=> write!(f, "{:02X}{:02X}0000", self.code, op0),
       // _ => { println!("error | InvalidInstrKind"); Err(fmt::Error) }
     }
@@ -216,10 +213,10 @@ impl Instruction {
       mnemonic: String::from("divr")
     }
   }
-  fn exit() -> Self {
+  fn exit(op0: i8) -> Self {
     Instruction {
       code: 0x41,
-      kind: InstrKind::SYS,
+      kind: InstrKind::R { op0: op0 },
       mnemonic: String::from("exit")
     }
   }
@@ -262,9 +259,6 @@ impl Instruction {
       NEW { op0, size } => {
         buf.push(0x50); buf.push(*op0 as u8);
         buf.push(((size >> 8) & 0xffi16) as u8); buf.push((size & 0xffi16) as u8);
-      },
-      SYS => {
-        buf.push(self.code); buf.push(0x00); buf.push(0x00); buf.push(0x00);
       },
       R { op0 } => {
         buf.push(self.code); buf.push(*op0 as u8); buf.push(0x00); buf.push(0x00);

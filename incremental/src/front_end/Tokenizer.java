@@ -19,14 +19,14 @@ public class Tokenizer {
         this.line = 1;
         this.state = TokenizerState.STANDARD;
         this.words = new HashMap<>();
-        reserve(new Word("if",     Tag.IF));
-        reserve(new Word("else",   Tag.ELSE));
-        reserve(new Word("while",  Tag.WHILE));
-        reserve(new Word("do",     Tag.DO));
-        reserve(new Word("break",  Tag.BREAK));
-        reserve(new Word("return", Tag.RET));
-        reserve(new Word("print",  Tag.PRINT));
-        reserve(new Word("int",    Tag.INT));
+        reserve(new Word("if",      Tag.IF));
+        reserve(new Word("else",    Tag.ELSE));
+        reserve(new Word("while",   Tag.WHILE));
+        reserve(new Word("do",      Tag.DO));
+        reserve(new Word("break",   Tag.BREAK));
+        reserve(new Word("return",  Tag.RET));
+        reserve(new Word("print",   Tag.PRINT));
+        reserve(new Word("Integer", Tag.INT));
     }
     private void reserve(final Word word) {
         words.put(word.lexeme, word);

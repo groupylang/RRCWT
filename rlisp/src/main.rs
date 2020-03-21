@@ -85,7 +85,6 @@ fn compile(file_name: &str) {
     println!("{:?}", ast);
     let ir = compiler.compile(&ast);
     println!("{:?}", ir);
-    println!("{}", ir);
     use std::io::{Write, BufWriter};
     let mut writer = BufWriter::new(File::create(format!("{}.wc", file_name)).unwrap());
     writer.write("RCWT".as_bytes()).unwrap();
