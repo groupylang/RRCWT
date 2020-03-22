@@ -3,6 +3,8 @@ package ast;
 import java.util.ArrayList;
 import java.util.List;
 
+import middle_end.IRBuilder;
+
 import static front_end.RecursiveDescentParser.tab;
 
 public class BinaryOperator extends Operator {
@@ -88,6 +90,15 @@ public class BinaryOperator extends Operator {
         return new Register("");
     }
     */
+
+    @Override
+    public ir.Operand toIR() {
+        ir.Operand l = left.toIR();
+        ir.Operand r = right.toIR();
+        ir.Register tmp = new ir.Register("$" + IRBuilder.tmp());
+        IRBuilder.add(new ir.ThreeAddress(tmp, l, operator, r));
+        return tmp;
+    }
     public List<middle_end.Instruction> gen() {
         final List<middle_end.Instruction> list = new ArrayList<>();
         list.add(new middle_end.Instruction(middle_end.InstructionType.POP, middle_end.Register.RDI, null));

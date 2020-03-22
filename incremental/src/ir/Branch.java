@@ -11,7 +11,7 @@ public class Branch implements Code {
     }
     @Override
     public String toString() {
-        return "\t" + instruction + " " + operand.toString() + " goto L" + label + "\n";
+        return "\t" + instruction + " " + operand.toString() + " goto $" + label + "\n";
     }
     @Override
     public String build() {

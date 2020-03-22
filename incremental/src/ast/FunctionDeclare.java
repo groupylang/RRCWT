@@ -2,6 +2,7 @@ package ast;
 
 import front_end.LocalVariable;
 import front_end.SymbolList;
+import middle_end.IRBuilder;
 
 import java.util.Iterator;
 
@@ -64,6 +65,8 @@ public class FunctionDeclare implements Node {
         return new middle_end.Function(name, closure.symbols.symbols.size(), closure.gen());
     }
     public ir.Function toIR() {
-        return new ir.Function(name, closure.toIR());
+        IRBuilder.clear();
+        closure.toIR();
+        return new ir.Function(name, IRBuilder.build());
     }
 }

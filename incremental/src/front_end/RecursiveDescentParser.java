@@ -8,12 +8,10 @@ import front_end.token.Number;
 import java.util.*;
 
 public class RecursiveDescentParser implements Parser {
-    private String input;
     private Tokenizer tokenizer;
     private Token now;
     private SymbolList current;
     private List<String> strings;
-    /* private Node pointer; */
     public int line;
 
     public RecursiveDescentParser() {}
@@ -73,7 +71,6 @@ public class RecursiveDescentParser implements Parser {
         return string;
     }
     public ParserResult parse(final String input) throws ParsingException {
-        this.input = input;
         this.tokenizer = new Tokenizer(input);
         this.now = tokenizer.tokenize();
         this.current = null;

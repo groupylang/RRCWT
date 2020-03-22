@@ -1,8 +1,11 @@
 package ast;
 
+import middle_end.IRBuilder;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static front_end.RecursiveDescentParser.tab;
 
@@ -82,5 +85,13 @@ public class FunctionCall extends Operator {
         }
         ir.append(')');
         return ir.toString();
+    }
+
+    @Override
+    public ir.Operand toIR() {
+        List<ir.Operand> a = arguments.stream().map(Expression::toIR).collect(Collectors.toList());
+        ir.Register tmp = new ir.Register("$" + IRBuilder.tmp());
+        IRBuilder.add(new ir.Call(tmp, operator, a));
+        return tmp;
     }
 }

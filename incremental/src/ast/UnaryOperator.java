@@ -1,5 +1,7 @@
 package ast;
 
+import middle_end.IRBuilder;
+
 public class UnaryOperator extends Operator {
     private final Expression operand;
     public UnaryOperator(final String operator, final Expression operand) {
@@ -29,5 +31,13 @@ public class UnaryOperator extends Operator {
     @Override
     public String toString() {
         return operator + " " + operand.toString();
+    }
+
+    @Override
+    public ir.Operand toIR() {
+        ir.Operand o = operand.toIR();
+        ir.Register tmp = new ir.Register("$" + IRBuilder.tmp());
+        IRBuilder.add(new ir.ThreeAddress(tmp, new ir.Immediate(0), operator, o));
+        return tmp;
     }
 }

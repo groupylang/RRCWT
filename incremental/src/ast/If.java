@@ -1,5 +1,7 @@
 package ast;
 
+import middle_end.IRBuilder;
+
 import java.util.List;
 
 import static middle_end.IRGenerator.emit_label;
@@ -23,11 +25,10 @@ public class If extends Statement {
     }
     @Override
     public String toAssembly() {
-        count++;
         return condition.toAssembly() +
                 "  cmp  rax, 0\n" +
                 "  je   .Lifend" +
-                count +
+                count++ +
                 "\n" +
                 then_closure.toAssembly() +
                 ".Lifend:\n";
@@ -45,6 +46,13 @@ public class If extends Statement {
                 .append(then_closure.toS(tab))
                 .append(')');
         return builder.toString();
+    }
+    @Override
+    public void toIR() {
+        int end = IRBuilder.tmp();
+        IRBuilder.add(new ir.Branch("iffalse", condition.toIR(), end));
+        then_closure.toIR();
+        IRBuilder.add(new ir.LocalLabel(end));
     }
     @Override
     public List<middle_end.Instruction> gen() {

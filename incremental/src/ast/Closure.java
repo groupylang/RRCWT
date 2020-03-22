@@ -88,11 +88,7 @@ public class Closure extends Statement {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
-    public List<ir.Code> toIR() {
-        final List<ir.Code> codes = new ArrayList<>();
-        statements.stream()
-                .map(Statement::toIR)
-                .forEach(codes::addAll);
-        return codes;
+    public void toIR() {
+        statements.forEach(Statement::toIR);
     }
 }

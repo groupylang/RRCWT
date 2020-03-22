@@ -1,7 +1,8 @@
 package ast;
 
+import middle_end.IRBuilder;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static middle_end.IRGenerator._print;
@@ -39,7 +40,7 @@ public class Print extends Statement {
         return list;
     }
     @Override
-    public List<ir.Code> toIR() {
-        return Collections.singletonList(new ir.Print(expression.toIR()));
+    public void toIR() {
+        IRBuilder.add(new ir.Print(expression.toIR()));
     }
 }

@@ -1,5 +1,7 @@
 package ast;
 
+import middle_end.IRBuilder;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,14 +55,13 @@ public class Assign extends Statement {
         return list;
     }
     @Override
-    public List<ir.Code> toIR() {
-        /*
-        ir.Operand operand = expression.();
-        return Arrays.asList(
-                new ir.Pop(new ir.Register()),
-                new ir.Pop(new ir.Register()),
-                new ir.Assign(variable.toIR(), )
-        );*/
-        return null;
+    public void toIR() {
+        ir.Operand o = expression.toIR();
+        IRBuilder.add(new ir.ThreeAddress(
+            new ir.Register(variable.toString()),
+            new ir.Immediate(0),
+            "+",
+            o
+        ));
     }
 }

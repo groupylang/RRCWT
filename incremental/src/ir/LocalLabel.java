@@ -7,7 +7,7 @@ public class LocalLabel implements Code {
     }
     @Override
     public String toString() {
-        return "L" + index + ":";
+        return "$" + index + ":\n";
     }
     @Override
     public String build() {

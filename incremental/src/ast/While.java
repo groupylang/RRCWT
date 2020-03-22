@@ -1,5 +1,8 @@
 package ast;
 
+import ir.Immediate;
+import middle_end.IRBuilder;
+
 import java.util.List;
 
 import static middle_end.IRGenerator.*;
@@ -57,5 +60,16 @@ public class While extends Statement {
     @Override
     public List<middle_end.Instruction> gen() {
         return null;
+    }
+
+    @Override
+    public void toIR() {
+        int begin = IRBuilder.tmp();
+        int end = IRBuilder.tmp();
+        IRBuilder.add(new ir.LocalLabel(begin));
+        IRBuilder.add(new ir.Branch("iffalse", condition.toIR(), end));
+        closure.toIR();
+        IRBuilder.add(new ir.Branch("iffalse", new Immediate(0), begin));
+        IRBuilder.add(new ir.LocalLabel(end));
     }
 }

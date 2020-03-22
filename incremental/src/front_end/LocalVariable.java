@@ -11,9 +11,9 @@ public class LocalVariable {
     }
     @Override
     public String toString() {
-        return name + version;
+        return name;
     }
-    int update() {
-        return version++;
+    void update() {
+        version++;
     }
 }
