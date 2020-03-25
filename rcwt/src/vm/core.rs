@@ -24,7 +24,16 @@ impl VirtualMachine {
     let status = unsafe {
       v_exec(self, (*self.text).as_ptr(), (*self.data).as_ptr(), self.program_counter as u32)
     };
+    println!();
     println!("log | VMExitWithStatus: {}", status);
+  }
+  #[no_mangle]
+  pub fn print_int(arg: u32) {
+    print!("{}", arg);
+  }
+  #[no_mangle]
+  pub fn print_str(arg: *const i8) {
+    print!("{}", unsafe { CStr::from_ptr(arg) }.to_str().expect("error | PrintInvalidString"));
   }
   #[no_mangle]
   pub fn is_hot(&mut self, pc: *const u32) -> u8 {

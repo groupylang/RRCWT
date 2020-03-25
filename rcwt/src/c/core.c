@@ -334,10 +334,10 @@ uint8_t v_exec(struct VirtualMachine* vm, uint8_t* text, uint8_t* data, uint32_t
     } NEXT;
 
     CASE(IOUT) {
-      printf("%d", e.registers[i.op0]);
+      print_int(e.registers[i.op0]);
     } NEXT;
     CASE(SOUT) {
-      printf("%s", e.data + e.registers[i.op0]);
+      print_str((char*) e.data + e.registers[i.op0]);
       if (jit_flag) {
         char* tmp = jit_str;
         sprintf(jit_str, "%s\tprintf(\"%s\", e->data + e->registers[%d]);\n", tmp, "%s", i.op0);

@@ -19,6 +19,8 @@ struct VirtualMachine;
 
 uint8_t v_exec(struct VirtualMachine*, uint8_t*, uint8_t*, uint32_t);
 
+void print_int(uint32_t);
+void print_str(char*);
 uint8_t is_hot(struct VirtualMachine*, instruction*);
 typedef void(*procedure)(env*);
 void jit(struct VirtualMachine*, uint32_t*, char*);
