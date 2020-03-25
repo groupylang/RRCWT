@@ -86,7 +86,12 @@ fn compile(file_name: &str) {
     let ir = compiler.compile(&ast);
     println!("{:?}", ir);
     use std::io::{Write, BufWriter};
-    let mut writer = BufWriter::new(File::create(format!("{}.wc", file_name)).unwrap());
+    use std::fs::create_dir_all;
+    use std::path::Path;
+    create_dir_all(Path::new(&format!("tmp/{}.wc", file_name)).parent().unwrap()).unwrap_or_else(|why| {
+      println!("! {:?}", why.kind());
+    });
+    let mut writer = BufWriter::new(File::create(format!("tmp/{}.wc", file_name)).unwrap());
     writer.write("RCWT".as_bytes()).unwrap();
     writer.write(ir.gen().as_slice()).unwrap();
   }

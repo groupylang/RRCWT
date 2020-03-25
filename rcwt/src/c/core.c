@@ -7,7 +7,7 @@ uint32_t pop(env* e) {
   return e->stack[--e->stack_pointer];
 }
 
-uint8_t v_exec(struct VirtualMachine* vm, uint8_t* text, uint8_t* data, uint32_t entry_point) {
+uint8_t v_exec(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point) {
   // initialize
   env e = {
     /* text         */ text,

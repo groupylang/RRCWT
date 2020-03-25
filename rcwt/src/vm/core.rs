@@ -17,12 +17,11 @@ impl VirtualMachine {
   }
   pub fn execute(&mut self) {
     #[link(name="core")]
-    #[allow(improper_ctypes)]
     extern "C" {
-      fn v_exec(vm: *const VirtualMachine, text: *const u8, data: *const u8, entry_point: u32) -> u8;
+      fn v_exec(vm: *const u32, text: *const u8, data: *const u8, entry_point: u32) -> u8;
     }
     let status = unsafe {
-      v_exec(self, (*self.text).as_ptr(), (*self.data).as_ptr(), self.program_counter as u32)
+      v_exec(self as *const VirtualMachine as *const u32, (*self.text).as_ptr(), (*self.data).as_ptr(), self.program_counter as u32)
     };
     println!();
     println!("log | VMExitWithStatus: {}", status);
@@ -42,6 +41,7 @@ impl VirtualMachine {
         1
       },
       Some(count) => {
+        #[allow(mutable_borrow_reservation_conflict)]
         self.hot_spots.insert(pc as usize, *count + 1);
         0
       },
@@ -54,15 +54,17 @@ impl VirtualMachine {
   #[cfg(target_os="windows")]
   #[no_mangle]
   pub fn jit(&mut self, pc: *const u32, jit_str: *const i8) {
+    let file_c = &format!("../tmp/jit{}.c", pc as usize);
+    let file_dll = &format!("../tmp/jit{}.dll", pc as usize);
     // compile
-    let mut writer = BufWriter::new(File::create("tmp/f.c").expect("error | FileNotFound: f.c"));
+    let mut writer = BufWriter::new(File::create(file_c).expect(&format!("error | FileNotFound: {}", file_c)));
     writer.write("#include <windows.h>\nBOOL APIENTRY DllMain(HANDLE h, DWORD d, LPVOID l) {\n\treturn TRUE;\n}\n".as_bytes()).unwrap();
     writer.write_all(unsafe { CStr::from_ptr(jit_str) }.to_bytes()).unwrap();
     Command::new("clang")
-      .args(&["tmp/f.c", "-o", "tmp/f.dll", "-Wall", "-g", "-shared", "-fPIC"])
+      .args(&[file_c, "-o", file_dll, "-Wall", "-g", "-shared", "-fPIC"])
       .spawn().unwrap();
     // load dll
-    match Library::new("tmp/f.dll") {
+    match Library::new(file_dll) {
       Ok(lib) => {
         let opt_procedure: Result<Symbol<Procedure>, _> = unsafe {
           lib.get("f\0".as_bytes())
@@ -77,21 +79,23 @@ impl VirtualMachine {
         }
       }
       Err(msg) => {
-        println!("{}: {}", msg, "tmp/f.dll")
+        println!("{}: {}", msg, file_dll)
       }
     }
   }
   #[cfg(target_os="linux")]
   #[no_mangle]
   pub fn jit(&mut self, pc: *const u32, jit_str: *const i8) {
+    let file_c = &format!("../tmp/jit{}.c", pc as usize);
+    let file_so = &format!("../tmp/jit{}.so", pc as usize);
     // compile
-    let mut writer = BufWriter::new(File::create("tmp/f.c").expect("error | FileNotFound: f.c"));
+    let mut writer = BufWriter::new(File::create(file_c).expect(&format!("error | FileNotFound: {}", file_c)));
     writer.write_all(unsafe { CStr::from_ptr(jit_str) }.to_bytes()).unwrap();
     Command::new("clang")
-      .args(&["tmp/f.c", "-o", "tmp/f.so", "-Wall", "-g", "-shared", "-fPIC"])
+      .args(&[file_c, "-o", file_so, "-Wall", "-g", "-shared", "-fPIC"])
       .spawn().unwrap();
     // load so
-    match Library::new("tmp/f.so") {
+    match Library::new(file_so) {
       Ok(lib) => {
         let opt_procedure: Result<Symbol<Procedure>, _> = unsafe {
           lib.get("f\0".as_bytes())
@@ -106,7 +110,7 @@ impl VirtualMachine {
         }
       }
       Err(msg) => {
-        println!("{}: {}", msg, "tmp/f.so")
+        println!("{}: {}", msg, file_so)
       }
     }
   }

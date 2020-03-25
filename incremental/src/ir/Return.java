@@ -4,7 +4,6 @@ import back_end.Builder;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Collections;
 
 public class Return implements Instruction {
     private final Operand src;

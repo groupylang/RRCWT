@@ -2,7 +2,6 @@ package ir;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Collections;
 
 public class Print implements Instruction {
     private final Operand src;
@@ -32,7 +31,7 @@ public class Print implements Instruction {
     }
     // TODO
     public String toAssembly() {
-        return "\tmov     rdi, [.Lc" + src.toAssembly() + "]\n\tcall    _printf\n";
+        return "\tmov     rdi, .Lc" + src.toAssembly() + "\n\tcall    printf\n";
     }
     @Override
     public void print() {

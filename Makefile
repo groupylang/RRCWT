@@ -1,12 +1,12 @@
 .PHONY: run
 run: build
-	@cargo run --bin rlisp -- ${ARG}
-	@cargo run --bin rcwt -- ${ARG}
+	@java -classpath javaout driver/Driver ${ARG}
+	@cargo run --bin rcwt -- tmp/${ARG}
 
 .PHONY: run2
 run2: build
-	@java -classpath javaout driver/Driver ${ARG}
-	@cargo run --bin rcwt -- ${ARG}
+	@cargo run --bin rlisp -- ${ARG}
+	@cargo run --bin rcwt -- tmp/${ARG}
 
 .PHONY: build
 build:
@@ -15,8 +15,4 @@ build:
 
 .PHONY: clean
 clean:
-	@rm -f examples/*.ast
-	@rm -f examples/*.ir
-	@rm -f examples/*.wc
-	@rm -f examples/*.s
 	@rm -f -r tmp

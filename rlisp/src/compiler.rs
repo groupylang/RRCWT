@@ -236,6 +236,7 @@ impl Instruction {
       RRI { op0, op1, op2 } => {
         buf.push(self.code); buf.push(*op0 as u8); buf.push(*op1 as u8); buf.push(*op2 as u8);
       },
+      #[allow(unused_variables)]
       IF { cond, dst } => {
         use Condition::*;
         match cond {

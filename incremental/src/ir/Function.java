@@ -20,9 +20,11 @@ public class Function {
     }
     public String toAssembly() {
         StringBuilder builder = new StringBuilder();
-        builder.append(".globl ")
+        builder.append("\t.globl ")
                 .append(name)
-                .append("\n")
+                .append("\n\t.type ")
+                .append(name)
+                .append(", @function\n")
                 .append(name)
                 .append(":\n")
                 .append("\tpush    rbp\n\tmov     rbp, rsp\n\tsub     rsp, 0\n");

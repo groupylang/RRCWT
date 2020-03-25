@@ -15,14 +15,12 @@ typedef struct {
   int8_t op2;
 } instruction;
 
-struct VirtualMachine;
-
-uint8_t v_exec(struct VirtualMachine*, uint8_t*, uint8_t*, uint32_t);
+uint8_t v_exec(uint32_t*, uint8_t*, uint8_t*, uint32_t);
 
 void print_int(uint32_t);
 void print_str(char*);
-uint8_t is_hot(struct VirtualMachine*, instruction*);
+uint8_t is_hot(uint32_t*, instruction*);
 typedef void(*procedure)(env*);
-void jit(struct VirtualMachine*, uint32_t*, char*);
+void jit(uint32_t*, uint32_t*, char*);
 
 #endif

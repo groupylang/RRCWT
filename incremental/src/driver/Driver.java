@@ -9,16 +9,14 @@ import middle_end.AssemblyBuilder;
 import middle_end.Function;
 import middle_end.Module;
 
-import java.io.BufferedOutputStream;
-import java.io.DataOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class Driver {
-    static void help() {
+    private static void help() {
         System.out.println("select a file to compile or 1 option from the ones below:");
         System.out.println("  \"-h\": show help");
         System.out.println("  \"-v\": show version");
@@ -26,7 +24,7 @@ public class Driver {
         System.out.println("add \"-d\" option to the end of the command.");
     }
 
-    static void version() {
+    private static void version() {
         System.out.println("incremental");
         System.out.println("  a toy language processor");
         System.out.println();
@@ -35,7 +33,7 @@ public class Driver {
         System.out.println("  license = \"MIT\"");
     }
 
-    static ParserResult grp2ast(String file_name) throws IOException {
+    private static ParserResult grp2ast(String file_name) throws IOException {
         final String input = Reader.use(file_name + ".grp", Reader::read);
         final RecursiveDescentParser parser = new RecursiveDescentParser();
         ParserResult result = null;
@@ -48,26 +46,26 @@ public class Driver {
         return result;
     }
 
-    static void put_ast(String file_name, List<ast.FunctionDeclare> ast_result) throws IOException {
+    private static void put_ast(String file_name, List<ast.FunctionDeclare> ast_result) throws IOException {
         final StringBuilder builder = new StringBuilder();
         ast_result.stream()
                 .map(ast.FunctionDeclare::toS)
                 .map(s -> s + "\n")
                 .forEach(builder::append);
-        Writer.use(file_name + ".ast", writer -> writer.write(builder.toString()));
+        Writer.use("tmp/" + file_name + ".ast", writer -> writer.write(builder.toString()));
     }
 
-    static List<ir.Function> ast2ir(List<ast.FunctionDeclare> ast_result) {
+    private static List<ir.Function> ast2ir(List<ast.FunctionDeclare> ast_result) {
         return ast_result.stream()
                 .map(ast.FunctionDeclare::toIR)
                 .collect(Collectors.toList());
     }
-    static middle_end.Module ast2ir_mid(List<ast.FunctionDeclare> ast_result) {
+    private static middle_end.Module ast2ir_mid(List<ast.FunctionDeclare> ast_result) {
         return new middle_end.Module(ast_result.stream()
                 .map(ast.FunctionDeclare::gen)
                 .collect(Collectors.toList()));
     }
-    static void put_ir(String file_name, List<ir.Function> ir_result, String[] strings) throws IOException {
+    private static void put_ir(String file_name, List<ir.Function> ir_result, String[] strings) throws IOException {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < strings.length; i++) {
             builder.append('s')
@@ -79,10 +77,10 @@ public class Driver {
         ir_result.stream()
                 .map(ir.Function::toString)
                 .forEach(builder::append);
-        Writer.use(file_name + ".ir", writer -> writer.write(builder.toString()));
+        Writer.use("tmp/" + file_name + ".ir", writer -> writer.write(builder.toString()));
     }
-    static void ir2wc_and_put(String file_name, List<ir.Function> ir_result, String[] strings) throws IOException {
-        final DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file_name + ".wc")));
+    private static void ir2wc_and_put(String file_name, List<ir.Function> ir_result, String[] strings) throws IOException {
+        final DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream("tmp/"+ file_name + ".wc")));
         dos.writeInt(0x52435754);
         dos.writeShort(4 * ir_result.stream().mapToInt(ir.Function::instructions_size).sum());
         dos.writeShort(Arrays.stream(strings).mapToInt(s -> s.length() + 1).sum());
@@ -109,26 +107,27 @@ public class Driver {
         }
         dos.flush();
     }
-    static void ir2assembly_and_put(String file_name, List<ir.Function> ir_result, String[] strings) throws IOException {
+    private static void ir2assembly_and_put(String file_name, List<ir.Function> ir_result, String[] strings) throws IOException {
         StringBuilder assembly_result = new StringBuilder(".intel_syntax noprefix\n");
         for (int i = 0; i < strings.length; i++) {
             assembly_result.append(".Lc")
                     .append(i)
                     .append(":\n")
-                    .append("\t.ascii \"")
+                    .append("\t.asciz \"")
                     .append(strings[i])
-                    .append("\\0\"\n");
+                    .append("\"\n");
         }
         ir_result.stream()
                 .map(ir.Function::toAssembly)
                 .forEach(assembly_result::append);
-        Writer.use(file_name + ".s", writer -> writer.write(assembly_result.toString()));
+        Writer.use("tmp/" + file_name + ".s", writer -> writer.write(assembly_result.toString()));
     }
     public static void main(String[] args) throws IOException {
         if (args.length == 1) {
             if (args[0].equals("-h")) help();
             else if (args[0].equals("-v")) version();
             else {
+                new File(Paths.get("tmp/" + args[0]).getParent().toString()).mkdirs();
                 ParserResult ast_result = grp2ast(args[0]);
                 List<ir.Function> ir_result = ast2ir(ast_result.ast);
 //                middle_end.Module ir_mid_result = ast2ir_mid(ast_result.ast);
@@ -139,6 +138,7 @@ public class Driver {
             }
         } else if (args.length == 2) {
             if (args[0].equals("-d")) {
+                new File(Paths.get("tmp/" + args[1]).getParent().toString()).mkdirs();
                 ParserResult ast_result = grp2ast(args[1]);
                 put_ast(args[1], ast_result.ast);
                 List<ir.Function> ir_result = ast2ir(ast_result.ast);
@@ -147,6 +147,7 @@ public class Driver {
                 ir2assembly_and_put(args[1], ir_result, ast_result.strings);
             }
             else if (args[1].equals("-d")) {
+                new File(Paths.get("tmp/" + args[0]).getParent().toString()).mkdirs();
                 ParserResult ast_result = grp2ast(args[0]);
                 put_ast(args[0], ast_result.ast);
                 List<ir.Function> ir_result = ast2ir(ast_result.ast);
