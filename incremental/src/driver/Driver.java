@@ -22,7 +22,8 @@ public class Driver {
         System.out.println("select a file to compile or 1 option from the ones below:");
         System.out.println("  \"-h\": show help");
         System.out.println("  \"-v\": show version");
-        System.out.println("for extra logs about compilation in order to debug, add \"-d\" option to the command.");
+        System.out.println("for extra logs about compilation in order to debug,");
+        System.out.println("add \"-d\" option to the end of the command.");
     }
 
     static void version() {

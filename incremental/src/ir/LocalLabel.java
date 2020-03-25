@@ -1,7 +1,7 @@
 package ir;
 
 public class LocalLabel implements Code {
-    private final int index;
+    private final int index; // TODO String
     public LocalLabel(final int index) {
         this.index = index;
     }
@@ -24,5 +24,8 @@ public class LocalLabel implements Code {
     @Override
     public String toAssembly() {
         return "";
+    }
+    public String name() { // TODO remove
+        return "$" + index;
     }
 }

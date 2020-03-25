@@ -7,16 +7,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Tokenizer {
+    private static String[] lines;
     private char[] input;
     private int position;
-    private int line;
+    private static int line_no;
+    private static int column_no;
     private Map<String, Word> words;
     private TokenizerState state;
 
     Tokenizer(final String input) {
         this.input = input.toCharArray();
         this.position = 0;
-        this.line = 1;
+        lines = input.lines().toArray(String[]::new);
+        line_no = 1;
+        column_no = 1;
         this.state = TokenizerState.STANDARD;
         this.words = new HashMap<>();
         reserve(new Word("if",      Tag.IF));
@@ -31,7 +35,7 @@ public class Tokenizer {
     private void reserve(final Word word) {
         words.put(word.lexeme, word);
     }
-    Token tokenize() {
+    Token tokenize() throws ParsingException {
         if (position >= input.length) {
             return Token.EOF;
         }
@@ -39,74 +43,74 @@ public class Tokenizer {
             case STANDARD:
                 while (Character.isWhitespace(input[position])) {
                     if (input[position] == '\n') {
-                        line++;
+                        line_no++; column_no = 0;
                     }
-                    position++;
+                    position++; column_no++;
                 }
                 switch (input[position]) {
                     case '&':
-                        position++;
+                        position++; column_no++;
                         if (input[position] == '&') {
-                            position++;
+                            position++; column_no++;
                             return Word.and; // &&
                         } else {
                             return new Token('&');
                         }
                     case '|':
-                        position++;
+                        position++; column_no++;
                         if (input[position] == '|') {
-                            position++;
+                            position++; column_no++;
                             return Word.or; // ||
                         } else {
                             return new Token('|');
                         }
                     case '=':
-                        position++;
+                        position++; column_no++;
                         if (input[position] == '=') {
-                            position++;
+                            position++; column_no++;
                             return Word.eq; // ==
                         } else {
                             return new Token('=');
                         }
                     case '!':
-                        position++;
+                        position++; column_no++;
                         if (input[position] == '=') {
-                            position++;
+                            position++; column_no++;
                             return Word.ne; // !=
                         } else {
                             return new Token('!');
                         }
                     case '<':
-                        position++;
+                        position++; column_no++;
                         if (input[position] == '=') {
-                            position++;
+                            position++; column_no++;
                             return Word.le; // <=
                         } else {
                             return new Token('<');
                         }
                     case '>':
-                        position++;
+                        position++; column_no++;
                         if (input[position] == '=') {
-                            position++;
+                            position++; column_no++;
                             return Word.ge; // >=
                         } else {
                             return new Token('>');
                         }
                     case '/':
-                        position++;
+                        position++; column_no++;
                         if (input[position] == '/') {
-                            position++;
+                            position++; column_no++;
                             state = TokenizerState.SHORT_COMMENT;
                             return tokenize();
                         } else if (input[position] == '*') {
-                            position++;
+                            position++; column_no++;
                             state = TokenizerState.LONG_COMMENT;
                             return tokenize();
                         } else {
                             return new Token('/');
                         }
                     case '\"':
-                        position++;
+                        position++; column_no++;
                         state = TokenizerState.STRING;
                         return tokenize();
                 }
@@ -114,7 +118,7 @@ public class Tokenizer {
                     int int_value = 0;
                     do {
                         int_value = 10 * int_value + Character.digit(input[position], 10);
-                        position++;
+                        position++; column_no++;
                     } while (Character.isDigit(input[position]));
                     if (input[position] != '.') {
                         return new Number(int_value);
@@ -122,7 +126,7 @@ public class Tokenizer {
 
                     float float_value = int_value;
                     for (int i = 0; ; i++) {
-                        position++;
+                        position++; column_no++;
                         if (!Character.isDigit(input[position])) break;
                         float_value += Character.digit(input[position], 10) / Math.pow(10, i + 1);
                     }
@@ -131,7 +135,7 @@ public class Tokenizer {
                     StringBuilder builder = new StringBuilder();
                     do {
                         builder.append(input[position]);
-                        position++;
+                        position++; column_no++;
                     } while (Character.isLetterOrDigit(input[position]));
                     String lexeme = builder.toString();
                     if (words.containsKey(lexeme)) {
@@ -142,7 +146,7 @@ public class Tokenizer {
                     return word;
                 } else {
                     Token token = new Token(input[position]);
-                    position++;
+                    position++; column_no++;
                     return token;
                 }
             case STRING:
@@ -150,32 +154,41 @@ public class Tokenizer {
                 while (input[position] != '\"') {
                     builder.append(input[position]);
                     if (input[position] == '\n') {
-                        line++;
+                        throw new ParsingException("string literal isn't multi-line token");
                     }
-                    position++;
+                    position++; column_no++;
                 }
-                position++;
+                position++; column_no++;
                 state = TokenizerState.STANDARD;
                 return new String_(builder.toString());
             case SHORT_COMMENT:
                 while (input[position] != '\n') {
-                    position++;
+                    position++; column_no++;
                 }
-                line++;
+                line_no++; column_no = 0;
                 position++;
                 state = TokenizerState.STANDARD;
                 return tokenize();
             case LONG_COMMENT:
                 while (input[position] != '*' || input[position + 1] != '/') {
                     if (input[position] == '\n') {
-                        line++;
+                        line_no++; column_no = 0;
                     }
-                    position++;
+                    position++; column_no++;
                 }
-                position += 2;
+                position += 2; column_no += 2;
                 state = TokenizerState.STANDARD;
                 return tokenize();
         }
-        return tokenize();
+        throw new ParsingException("InvalidToken");
+    }
+    public static int line_no() {
+        return line_no;
+    }
+    public static int column_no() {
+        return column_no;
+    }
+    public static String line(int line_no) {
+        return lines[line_no - 1];
     }
 }

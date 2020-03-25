@@ -17,4 +17,8 @@ public class String_ implements Operand {
     public String toAssembly() {
         return "";
     }
+    @Override
+    public void print() {
+        System.out.print(value);
+    }
 }

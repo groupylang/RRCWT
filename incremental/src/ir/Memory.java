@@ -13,4 +13,8 @@ public class Memory implements Operand {
     public String toAssembly() {
         return "";
     }
+    @Override
+    public void print() {
+        System.out.print("[]");
+    }
 }

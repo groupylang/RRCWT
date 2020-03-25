@@ -12,7 +12,6 @@ public class RecursiveDescentParser implements Parser {
     private Token now;
     private SymbolList current;
     private List<String> strings;
-    public int line;
 
     public RecursiveDescentParser() {}
     private boolean match(final int tag) {
@@ -75,7 +74,6 @@ public class RecursiveDescentParser implements Parser {
         this.now = tokenizer.tokenize();
         this.current = null;
         this.strings = new ArrayList<>();
-        this.line = 1;
 
         final List<FunctionDeclare> function_declarations = new ArrayList<>();
         while (match(Tag.INT)) {

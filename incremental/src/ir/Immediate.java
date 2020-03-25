@@ -21,4 +21,8 @@ public class Immediate implements Operand {
     public String toAssembly() {
         return "" + value;
     }
+    @Override
+    public void print() {
+        System.out.print(value);
+    }
 }

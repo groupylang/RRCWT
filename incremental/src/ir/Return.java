@@ -2,14 +2,18 @@ package ir;
 
 import back_end.Builder;
 
-public class Return implements Code {
-    private final Operand operand;
-    public Return(final Operand operand) {
-        this.operand = operand;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Collections;
+
+public class Return implements Instruction {
+    private final Operand src;
+    public Return(final Operand src) {
+        this.src = src;
     }
     @Override
     public String toString() {
-        return "\treturn " + operand.toString() + "\n";
+        return "\treturn " + src.toString() + "\n";
     }
     @Override
     public String build() {
@@ -26,7 +30,19 @@ public class Return implements Code {
     }
     @Override
     public String toAssembly() {
-        return "\tmov     rax, " + operand.toAssembly() +
+        return "\tmov     rax, " + src.toAssembly() +
                 "\n\tmov     rsp, rbp\n\tpop     rbp\n\tret\n";
+    }
+    @Override
+    public void print() {
+        System.out.print("\tprint ");
+        src.print();
+        System.out.println();
+    }
+    @Override
+    public List<String> registers() {
+        List<String> registers = new ArrayList<>();
+        if (src instanceof Register) registers.add(src.toString());
+        return registers;
     }
 }
