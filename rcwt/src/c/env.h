@@ -1,18 +1,26 @@
+// interface: c++ to c
 #ifndef RCWT_ENV_H
 #define RCWT_ENV_H
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdint>
+#include <cstdlib>
+#include <vector>
 
 typedef struct {
   uint8_t* text;
   uint8_t* data;
   uint32_t* registers;
-  uint32_t* stack;
-  uint32_t* heap;
+  std::vector<uint32_t> stack;
+  std::vector<uint32_t> heap;
   uint32_t stack_pointer;
   uint32_t base_pointer;
 } env;
+
+extern "C" {
+  uint8_t v_exec(uint32_t*, uint8_t*, uint8_t*, uint32_t);
+  void push(env*, uint32_t);
+  uint32_t pop(env*);
+}
 
 #endif

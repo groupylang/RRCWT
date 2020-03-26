@@ -1,7 +1,6 @@
 //! TODO comment
 use super::ll::Scanner;
-use super::VirtualMachine;
-use super::Procedure;
+use super::{env, Procedure, VirtualMachine};
 use std::io::{Write, BufWriter};
 use std::fs::File;
 use std::process::Command;
@@ -15,6 +14,7 @@ impl VirtualMachine {
     scanner.load(file_name);
     scanner.setup()
   }
+  // wrapper of v_exec()
   pub fn execute(&mut self) {
     #[link(name="core")]
     extern "C" {
@@ -34,6 +34,7 @@ impl VirtualMachine {
   pub fn print_str(arg: *const i8) {
     print!("{}", unsafe { CStr::from_ptr(arg) }.to_str().expect("error | PrintInvalidString"));
   }
+  // count how many times vm calls the virtual function and check if it is hot
   #[no_mangle]
   pub fn is_hot(&mut self, pc: *const u32) -> u8 {
     match self.hot_spots.get(&(pc as usize)) {
@@ -53,7 +54,7 @@ impl VirtualMachine {
   }
   #[cfg(target_os="windows")]
   #[no_mangle]
-  pub fn jit(&mut self, pc: *const u32, jit_str: *const i8) {
+  pub fn jit_assemble(&mut self, pc: *const u32, jit_str: *const i8) {
     let file_c = &format!("../tmp/jit{}.c", pc as usize);
     let file_dll = &format!("../tmp/jit{}.dll", pc as usize);
     // compile
@@ -85,7 +86,7 @@ impl VirtualMachine {
   }
   #[cfg(target_os="linux")]
   #[no_mangle]
-  pub fn jit(&mut self, pc: *const u32, jit_str: *const i8) {
+  pub fn jit_assemble(&mut self, pc: *const u32, jit_str: *const i8) {
     let file_c = &format!("../tmp/jit{}.c", pc as usize);
     let file_so = &format!("../tmp/jit{}.so", pc as usize);
     // compile
@@ -113,5 +114,10 @@ impl VirtualMachine {
         println!("{}: {}", msg, file_so)
       }
     }
+  }
+  // execute native function
+  #[no_mangle]
+  pub fn n_exec(&mut self, pc: *const u32, e: &env) {
+    self.procedures.get(&(pc as usize)).expect(&format!("error | ProcedureNotFound: {}", pc as usize))(e);
   }
 }
