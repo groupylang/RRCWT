@@ -14,7 +14,6 @@ typedef struct {
 extern "C" {
   void print_int(uint32_t);
   void print_str(char*);
-  uint8_t is_hot(uint32_t*, instruction*);
   typedef void(*procedure)(env*);
 }
 

@@ -22,33 +22,39 @@ std::string format(const char fmt[], Args ... args) {
   return std::string(&buf[0], &buf[0] + len);
 }
 
+// count how many times vm calls the virtual function and check if it is hot
+uint8_t is_hot(std::unordered_map<size_t, uint32_t>& hot_spots, size_t pc) {
+  if (hot_spots[pc] < 3) { hot_spots[pc]++; return 0; }
+  else { return 1; }
+}
+
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
-void jit_asm(std::unordered_map<size_t, procedure>* procs, size_t pc, const char* jit_str) {
-  std::ofstream fout(format("tmp/jit%zu.cpp", pc).c_str());
+void jit_asm(std::unordered_map<size_t, procedure>& procs, size_t id, const char* jit_str) {
+  std::ofstream fout(format("tmp/jit%zu.cpp", id).c_str());
   fout << jit_str;
   fout.flush();
-  system(format("clang++ tmp/jit%zu.cpp -o tmp/jit%zu.so -Wall -Wextra -g -shared -fPIC", pc, pc).c_str());
-  auto handle = LoadLibrary(reinterpret_cast<LPCWSTR>("tmp/jit.so"));
+  system(format("clang++ tmp/jit%zu.cpp -o tmp/jit%zu.so -Wall -Wextra -g -shared -fPIC", id, id).c_str());
+  auto handle = LoadLibrary(reinterpret_cast<LPCWSTR>(format("tmp/jit%zu.so", id).c_str()));
   auto f = reinterpret_cast<procedure>(GetProcAddress(handle, "f"));
-  procs->emplace(pc, f);
+  procs[id] = f;
 }
 #elif defined(__linux)
 #include <dlfcn.h>
-void jit_asm(std::unordered_map<size_t, procedure>* procs, size_t pc, const char* jit_str) {
-  std::ofstream fout(format("tmp/jit%zu.cpp", pc).c_str());
+void jit_asm(std::unordered_map<size_t, procedure>& procs, size_t id, const char* jit_str) {
+  std::ofstream fout(format("tmp/jit%zu.cpp", id).c_str());
   fout << jit_str;
   fout.flush();
-  system(format("clang++ tmp/jit%zu.cpp -o tmp/jit%zu.so -Wall -Wextra -g -shared -fPIC", pc, pc).c_str());
-  auto handle = dlopen("tmp/jit.so", RTLD_LAZY);
+  system(format("clang++ tmp/jit%zu.cpp -o tmp/jit%zu.so -Wall -Wextra -g -shared -fPIC", id, id).c_str());
+  auto handle = dlopen(format("tmp/jit%zu.so", id).c_str(), RTLD_LAZY);
   auto f = reinterpret_cast<procedure>(dlsym(handle, "f"));
-  procs->emplace(pc, f);
+  procs[id] = f;
 }
 #endif
 
 // execute native function
-void n_exec(std::unordered_map<size_t, procedure>* procs, size_t pc, env* e) {
-  procs->at(pc)(e);
+void n_exec(std::unordered_map<size_t, procedure>& procs, size_t id, env* e) {
+  procs[id](e);
 }
 
 // execute virtual functions
@@ -65,6 +71,8 @@ uint8_t v_exec(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point)
   };
   uint8_t jit_flag = 0;
   std::string jit_str = std::string();
+  auto hot_spots = std::unordered_map<size_t, uint32_t>();
+  hot_spots.reserve(32);
   auto procs = std::unordered_map<size_t, procedure>();
   procs.reserve(32);
   // execute
@@ -354,7 +362,8 @@ uint8_t v_exec(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point)
 			return i.op0;
 		} NEXT;
     CASE(CALL) {
-      jit_flag = 1 /*is_hot(vm, pc)*/;
+      jit_flag = is_hot(hot_spots, reinterpret_cast<size_t>(pc));
+      if (jit_flag == 2) { n_exec(procs, reinterpret_cast<size_t>(pc), &e); NEXT; }
       push(&e, e.base_pointer);
       e.base_pointer = e.stack_pointer;
       e.stack_pointer += i.op0;
@@ -369,8 +378,7 @@ uint8_t v_exec(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point)
       // jit
       if (jit_flag) {
         jit_str += "\treturn;\n}\n";
-        jit_asm(&procs, reinterpret_cast<size_t>(pc), jit_str.c_str());
-        n_exec(&procs, reinterpret_cast<size_t>(pc), &e);
+        jit_asm(procs, reinterpret_cast<size_t>(pc - 1), jit_str.c_str());
         jit_flag = 0;
       }
       e.stack_pointer = e.base_pointer;
