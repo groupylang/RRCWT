@@ -3,6 +3,9 @@
 #include <utility>
 #include <algorithm>
 #include <string>
+#include <iostream>
+#include <fstream>
+#include <unordered_map>
 
 std::vector<uint32_t> vec_new() {
   auto tmp = std::vector<uint32_t>();
@@ -19,6 +22,35 @@ std::string format(const char fmt[], Args ... args) {
   return std::string(&buf[0], &buf[0] + len);
 }
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+void jit_asm(std::unordered_map<size_t, procedure>* procs, size_t pc, const char* jit_str) {
+  std::ofstream fout(format("tmp/jit%zu.cpp", pc).c_str());
+  fout << jit_str;
+  fout.flush();
+  system(format("clang++ tmp/jit%zu.cpp -o tmp/jit%zu.so -Wall -Wextra -g -shared -fPIC", pc, pc).c_str());
+  auto handle = LoadLibrary(reinterpret_cast<LPCWSTR>("tmp/jit.so"));
+  auto f = reinterpret_cast<procedure>(GetProcAddress(handle, "f"));
+  procs->emplace(pc, f);
+}
+#elif defined(__linux)
+#include <dlfcn.h>
+void jit_asm(std::unordered_map<size_t, procedure>* procs, size_t pc, const char* jit_str) {
+  std::ofstream fout(format("tmp/jit%zu.cpp", pc).c_str());
+  fout << jit_str;
+  fout.flush();
+  system(format("clang++ tmp/jit%zu.cpp -o tmp/jit%zu.so -Wall -Wextra -g -shared -fPIC", pc, pc).c_str());
+  auto handle = dlopen("tmp/jit.so", RTLD_LAZY);
+  auto f = reinterpret_cast<procedure>(dlsym(handle, "f"));
+  procs->emplace(pc, f);
+}
+#endif
+
+// execute native function
+void n_exec(std::unordered_map<size_t, procedure>* procs, size_t pc, env* e) {
+  procs->at(pc)(e);
+}
+
 // execute virtual functions
 uint8_t v_exec(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point) {
   // initialize
@@ -33,6 +65,8 @@ uint8_t v_exec(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point)
   };
   uint8_t jit_flag = 0;
   std::string jit_str = std::string();
+  auto procs = std::unordered_map<size_t, procedure>();
+  procs.reserve(32);
   // execute
 // direct threading
 #if defined __GNUC__ || defined __clang__ || defined __INTEL_COMPILER
@@ -49,7 +83,7 @@ uint8_t v_exec(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point)
   #define END_DISPATCH }}
 #endif
 
-  instruction* pc = (instruction*) (e.text + entry_point);
+  instruction* pc = reinterpret_cast<instruction*>(e.text + entry_point);
   instruction i;
 
 #if defined __GNUC__ || defined __clang__ || defined __INTEL_COMPILER
@@ -320,26 +354,27 @@ uint8_t v_exec(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point)
 			return i.op0;
 		} NEXT;
     CASE(CALL) {
-      jit_flag = is_hot(vm, pc);
+      jit_flag = 1 /*is_hot(vm, pc)*/;
       push(&e, e.base_pointer);
       e.base_pointer = e.stack_pointer;
       e.stack_pointer += i.op0;
       push(&e, reinterpret_cast<uint8_t*>(++pc) - text);
       pc = reinterpret_cast<instruction*>(text + i.op2);
       if (jit_flag) {
-        jit_str += format("#include \"env.h\"\nvoid f(env* e) {\n");
+        jit_str += format("#include \"../rcwt/src/c/env.h\"\nextern \"C\" void f(env* e) {\n");
       }
     } JUMP;
     CASE(RET) {
       pc = reinterpret_cast<instruction*>(text + pop(&e));
-      e.stack_pointer = e.base_pointer;
-      e.base_pointer = pop(&e);
       // jit
       if (jit_flag) {
         jit_str += "\treturn;\n}\n";
-        jit_assemble(vm, (uint32_t*)pc - 1, jit_str.c_str());
+        jit_asm(&procs, reinterpret_cast<size_t>(pc), jit_str.c_str());
+        n_exec(&procs, reinterpret_cast<size_t>(pc), &e);
         jit_flag = 0;
       }
+      e.stack_pointer = e.base_pointer;
+      e.base_pointer = pop(&e);
     } JUMP;
     CASE(IFGT) {
       if (e.registers[i.op1] > e.registers[i.op2]) { pc += i.op0; JUMP; }

@@ -13,6 +13,12 @@ build:
 	@javac -sourcepath incremental/src -d javaout incremental/src/driver/Driver.java
 	@cargo build
 
+ifeq ($(OS), Windows_NT)
+.PHONY: clean
+clean:
+	@rmdir /q /s tmp
+else
 .PHONY: clean
 clean:
 	@rm -f -r tmp
+endif

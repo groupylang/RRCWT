@@ -1,4 +1,4 @@
-#include "../c/env.h"
+#include "env.h"
 
 // push into stack
 void push(env* e, uint32_t item) {

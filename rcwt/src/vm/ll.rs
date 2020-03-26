@@ -163,6 +163,10 @@ impl Scanner {
         _ => println!("warning | InvalidSegmentId in relocation header")
       }
     }
+    // prepare for jit
+    use std::path::Path;
+    std::fs::create_dir_all(Path::new("tmp")).unwrap();
+
     VirtualMachine {
       text: Box::from(std::mem::take(&mut self.text)),
       data: Box::from(std::mem::take(&mut self.data)),

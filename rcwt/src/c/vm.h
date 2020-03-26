@@ -16,8 +16,6 @@ extern "C" {
   void print_str(char*);
   uint8_t is_hot(uint32_t*, instruction*);
   typedef void(*procedure)(env*);
-  void jit_assemble(uint32_t*, uint32_t*, const char*);
-  void n_exec(uint32_t*, uint32_t*, env*);
 }
 
 #endif
