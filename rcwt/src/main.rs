@@ -1,7 +1,5 @@
 extern crate rcwt;
-extern crate rlisp;
 use rcwt::vm::VirtualMachine;
-
 
 fn help() {
   println!("select a file to execute or 1 option from the ones below:");

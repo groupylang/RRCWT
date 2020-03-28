@@ -212,7 +212,7 @@ uint8_t v_exec(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point)
   #define IOUT  0xfe
   #define SOUT  0xff
 #endif
-
+  try {
 	INIT_DISPATCH {
     CASE(NOP) {
     } NEXT;
@@ -420,5 +420,26 @@ uint8_t v_exec(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point)
       }
     } NEXT;
   } END_DISPATCH;
+
+  } catch (std::invalid_argument) {
+    std::cout << "error | InvalidArgument" << std::endl;
+    return 1;
+  } catch (std::length_error) {
+    std::cout << "error | VectorOutOfBounds" << std::endl;
+    return 1;
+  } catch (std::out_of_range) {
+    std::cout << "error | ObjectTooLong" << std::endl;
+    return 1;
+  } catch (std::bad_alloc) {
+    std::cout << "error | BadAlloc" << std::endl;
+    return 1;
+  } catch (std::overflow_error) {
+    std::cout << "error | OverFlow" << std::endl;
+    return 1;
+  } catch (std::underflow_error) {
+    std::cout << "error | UnderFlow" << std::endl;
+    return 1;
+  }
+
   return 0;
 }
