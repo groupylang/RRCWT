@@ -61,11 +61,38 @@ fn lex_asterisk(input: &[u8], start: usize) -> Result<(Token, usize), LexError> 
 fn lex_slash(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
   consume_byte(input, start, b'/').map(|(_, end)| (Token::slash(Loc(start, end)), end))
 }
+fn lex_less(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+  consume_byte(input, start, b'<').map(|(_, end)| (Token::less(Loc(start, end)), end))
+}
+fn lex_equal(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+  consume_byte(input, start, b'=').map(|(_, end)| (Token::equal(Loc(start, end)), end))
+}
+fn lex_greater(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+  consume_byte(input, start, b'>').map(|(_, end)| (Token::greater(Loc(start, end)), end))
+}
+fn lex_and(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+  consume_byte(input, start, b'&').map(|(_, end)| (Token::and(Loc(start, end)), end))
+}
+fn lex_or(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+  consume_byte(input, start, b'|').map(|(_, end)| (Token::or(Loc(start, end)), end))
+}
 fn lex_lparen(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
   consume_byte(input, start, b'(').map(|(_, end)| (Token::lparen(Loc(start, end)), end))
 }
 fn lex_rparen(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
   consume_byte(input, start, b')').map(|(_, end)| (Token::rparen(Loc(start, end)), end))
+}
+fn lex_lbrace(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+  consume_byte(input, start, b'{').map(|(_, end)| (Token::lbrace(Loc(start, end)), end))
+}
+fn lex_rbrace(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+  consume_byte(input, start, b'}').map(|(_, end)| (Token::rbrace(Loc(start, end)), end))
+}
+fn lex_lbracket(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+  consume_byte(input, start, b'[').map(|(_, end)| (Token::lbracket(Loc(start, end)), end))
+}
+fn lex_rbracket(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+  consume_byte(input, start, b']').map(|(_, end)| (Token::rbracket(Loc(start, end)), end))
 }
 fn skip_spaces(input: &[u8], pos: usize) -> Result<((), usize), LexError> {
   let pos = recognize_many(input, pos, |b| b" \n\t".contains(&b));
@@ -89,8 +116,17 @@ pub fn lex(input: &str) -> Result<Vec<Token>, LexError> {
       b'-' => lex_a_token!(lex_minus(input, pos)),
       b'*' => lex_a_token!(lex_asterisk(input, pos)),
       b'/' => lex_a_token!(lex_slash(input, pos)),
+      b'<' => lex_a_token!(lex_less(input, pos)),
+      b'=' => lex_a_token!(lex_equal(input, pos)),
+      b'>' => lex_a_token!(lex_greater(input, pos)),
+      b'&' => lex_a_token!(lex_and(input, pos)),
+      b'|' => lex_a_token!(lex_or(input, pos)),
       b'(' => lex_a_token!(lex_lparen(input, pos)),
       b')' => lex_a_token!(lex_rparen(input, pos)),
+      b'{' => lex_a_token!(lex_lbrace(input, pos)),
+      b'}' => lex_a_token!(lex_rbrace(input, pos)),
+      b'[' => lex_a_token!(lex_lbracket(input, pos)),
+      b']' => lex_a_token!(lex_rbracket(input, pos)),
       b' ' | b'\n' | b'\t' => {
         let ((), p) = skip_spaces(input, pos)?;
         pos = p;

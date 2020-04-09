@@ -15,7 +15,7 @@ impl IrCompiler {
     let _expr = self.compile_inner(expr, &mut block);
     block.push(Instruction::iout(_expr));
     block.push(Instruction::exit(0x00));
-    BasicBlock { label: String::from("main"), block }
+    BasicBlock { label: "main", block }
   }
 
   fn compile_inner(&mut self, expr: &Ast, block: &mut Vec<Instruction>) -> i8 {
@@ -44,8 +44,13 @@ impl IrCompiler {
         match op.value {
           Add => block.push(Instruction::addr(self.tmp_count, _l, _r)),
           Sub => block.push(Instruction::subr(self.tmp_count, _l, _r)),
-          Mult => block.push(Instruction::mulr(self.tmp_count, _l, _r)),
+          Mul => block.push(Instruction::mulr(self.tmp_count, _l, _r)),
           Div => block.push(Instruction::divr(self.tmp_count, _l, _r)),
+          Gt => block.push(Instruction::gt(self.tmp_count, _l, _r)),
+          Equal => block.push(Instruction::eq(self.tmp_count, _l, _r)),
+          Lt => block.push(Instruction::gt(self.tmp_count, _r, _l)),
+          And => block.push(Instruction::and(self.tmp_count, _l, _r)),
+          Or  => block.push(Instruction::or(self.tmp_count, _l, _r)),
         }
         self.tmp_count
       }
@@ -53,12 +58,12 @@ impl IrCompiler {
   }
 }
 
-pub struct BasicBlock {
-  label: String,
-  block: Vec<Instruction>
+pub struct BasicBlock<'a> {
+  label: &'a str,
+  block: Vec<Instruction<'a>>
 }
 
-impl fmt::Debug for BasicBlock {
+impl <'a> fmt::Debug for BasicBlock<'a> {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     let result = writeln!(f, "{}:", self.label);
     for instr in &self.block {
@@ -68,7 +73,7 @@ impl fmt::Debug for BasicBlock {
   }
 }
 
-impl fmt::Display for BasicBlock {
+impl <'a> fmt::Display for BasicBlock<'a> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let result = writeln!(f, "{}:", self.label);
     for instr in &self.block {
@@ -78,7 +83,7 @@ impl fmt::Display for BasicBlock {
   }
 }
 
-impl BasicBlock {
+impl <'a> BasicBlock<'a> {
   pub fn gen(&self) -> Vec<u8> {
     let mut buf: Vec<u8> = Vec::with_capacity(32);
     buf.push(0x00); buf.push(4 * self.block.len() as u8);
@@ -128,13 +133,13 @@ enum InstrKind {
   R { op0: i8 }
 }
 
-struct Instruction {
+struct Instruction<'a> {
   code: u8,
   kind: InstrKind,
-  mnemonic: String
+  mnemonic: &'a str
 }
 
-impl fmt::Debug for Instruction {
+impl <'a> fmt::Debug for Instruction<'a> {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     use InstrKind::*;
     match &self.kind {
@@ -148,7 +153,7 @@ impl fmt::Debug for Instruction {
   }
 }
 
-impl fmt::Display for Instruction {
+impl <'a> fmt::Display for Instruction<'a> {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     use InstrKind::*;
     match &self.kind {
@@ -170,61 +175,89 @@ impl fmt::Display for Instruction {
     }
   }
 }
-impl Instruction {
+impl <'a> Instruction<'a> {
   fn addi(op0: i8, op1: i8, op2: i8) -> Self {
     Instruction {
       code: 0x20,
-      kind: InstrKind::RRI { op0: op0, op1: op1, op2: op2},
-      mnemonic: String::from("addi")
+      kind: InstrKind::RRI { op0: op0, op1: op1, op2: op2 },
+      mnemonic: "addi"
     }
   }
   fn subi(op0: i8, op1: i8, op2: i8) -> Self {
     Instruction {
       code: 0x21,
-      kind: InstrKind::RRI { op0: op0, op1: op1, op2: op2},
-      mnemonic: String::from("subi")
+      kind: InstrKind::RRI { op0: op0, op1: op1, op2: op2 },
+      mnemonic: "subi"
     }
   }
   fn addr(op0: i8, op1: i8, op2: i8) -> Self {
     Instruction {
       code: 0x10,
-      kind: InstrKind::RRR { op0: op0, op1: op1, op2: op2},
-      mnemonic: String::from("addr")
+      kind: InstrKind::RRR { op0: op0, op1: op1, op2: op2 },
+      mnemonic: "addr"
     }
   }
   fn subr(op0: i8, op1: i8, op2: i8) -> Self {
     Instruction {
       code: 0x11,
-      kind: InstrKind::RRR { op0: op0, op1: op1, op2: op2},
-      mnemonic: String::from("subr")
+      kind: InstrKind::RRR { op0: op0, op1: op1, op2: op2 },
+      mnemonic: "subr"
     }
   }
   fn mulr(op0: i8, op1: i8, op2: i8) -> Self {
     Instruction {
       code: 0x12,
-      kind: InstrKind::RRR { op0: op0, op1: op1, op2: op2},
-      mnemonic: String::from("mulr")
+      kind: InstrKind::RRR { op0: op0, op1: op1, op2: op2 },
+      mnemonic: "mulr"
     }
   }
   fn divr(op0: i8, op1: i8, op2: i8) -> Self {
     Instruction {
       code: 0x13,
-      kind: InstrKind::RRR { op0: op0, op1: op1, op2: op2},
-      mnemonic: String::from("divr")
+      kind: InstrKind::RRR { op0: op0, op1: op1, op2: op2 },
+      mnemonic: "divr"
+    }
+  }
+  fn gt(op0: i8, op1: i8, op2: i8) -> Self {
+    Instruction {
+      code: 0x14,
+      kind: InstrKind::RRR { op0: op0, op1: op1, op2: op2 },
+      mnemonic: "gt"
+    }
+  }
+  fn eq(op0: i8, op1: i8, op2: i8) -> Self {
+    Instruction {
+      code: 0x16,
+      kind: InstrKind::RRR { op0: op0, op1: op1, op2: op2 },
+      mnemonic: "eq"
+    }
+  }
+  fn and(op0: i8, op1: i8, op2: i8) -> Self {
+    Instruction {
+      code: 0x18,
+      kind: InstrKind::RRR { op0: op0, op1: op1, op2: op2 },
+      mnemonic: "and"
+    }
+  }
+  fn or(op0: i8, op1: i8, op2: i8) -> Self {
+    Instruction {
+      code: 0x19,
+      kind: InstrKind::RRR { op0: op0, op1: op1, op2: op2 },
+      mnemonic: "or"
     }
   }
   fn exit(op0: i8) -> Self {
     Instruction {
       code: 0x41,
       kind: InstrKind::R { op0: op0 },
-      mnemonic: String::from("exit")
+      mnemonic: "exit"
     }
   }
   fn iout(op0: i8) -> Self {
     Instruction {
       code: 0xfe,
       kind: InstrKind::R { op0: op0 },
-      mnemonic: String::from("iout")
+      mnemonic: "iout"
     }
   }
   fn gen(&self, buf: &mut Vec<u8>) {

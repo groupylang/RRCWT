@@ -81,20 +81,20 @@ impl ConfigBuilder {
 fn write(file_name: &str, config: Config) {
   let input = std::env::current_dir().unwrap().join(file_name);
   let workspace = input.parent().unwrap();
-  let writer = BufWriter::new(File::create(workspace.join(Path::new("config.yml"))).expect("error | ConfigNotFound"));
+  let writer = BufWriter::new(File::create(workspace.join("config.yml")).expect("error | ConfigNotFound"));
   serde_yaml::to_writer(writer, &config).expect("error | InvalidYamlFile");
 }
 
 fn read(path: &str) -> Config {
   let reader = BufReader::new(
-    File::open(std::env::current_dir().unwrap().join(path).join(Path::new("config.yml"))
+    File::open(std::env::current_dir().unwrap().join(path).join("config.yml")
   ).expect("error | ConfigNotFound"));
   let config: Config = serde_yaml::from_reader(reader).expect("error | InvalidYamlFile");
   config
 }
 
 fn main() {
-  let driver = App::new("driver")
+  let driver = App::new("rrcwt")
   .version("0.1.0")
   .author("sKyrBBit <iamskyrabbit@gmail.com>")
   .about("a toy processor")
@@ -153,11 +153,11 @@ fn main() {
     let workspace = std::env::current_dir().unwrap().join(path);
     create_dir_all(&workspace).unwrap();
     // create main.grp
-    let main = workspace.join(Path::new("main.grp"));
+    let main = workspace.join("main.grp");
     let mut writer = BufWriter::new(File::create(&main).unwrap());
     writer.write_all("Integer main() {\n\tprint \"Hello, World!\";\n\treturn 0;\n}".as_bytes()).unwrap();
     // create config.yml
-    let config = ConfigBuilder::new("workspace/main")
+    let config = ConfigBuilder::new(&format!("{}/main", path))
       .builder_input(matches.value_of("builder-input"))
       .debug(matches.is_present("debug"))
       .runner_input(matches.value_of("runner-input"))

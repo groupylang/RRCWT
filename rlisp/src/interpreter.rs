@@ -44,14 +44,19 @@ impl Interpreter {
     match op.value {
       Add => Ok(l + r),
       Sub => Ok(l - r),
-      Mult => Ok(l * r),
+      Mul => Ok(l * r),
       Div => {
         if r == 0 {
           Err(InterpreterErrorKind::DivisionByZero)
         } else {
           Ok(l / r)
         }
-      }
+      },
+      Lt => Ok(if l < r {1} else {0}),
+      Equal => Ok(if l == r {1} else {0}),
+      Gt => Ok(if l > r {1} else {0}),
+      And => Ok(l & r),
+      Or => Ok(l | r),
     }
   }
 }

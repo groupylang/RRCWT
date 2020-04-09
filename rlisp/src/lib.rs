@@ -34,8 +34,17 @@ pub enum TokenKind {
   Minus,
   Asterisk,
   Slash,
+  Less,
+  Equal,
+  Greater,
+  And,
+  Or,
   LParen,
   RParen,
+  LBrace,
+  RBrace,
+  LBracket,
+  RBracket,
 }
 
 pub type Token = Annot<TokenKind>;
@@ -56,11 +65,38 @@ impl Token {
   fn slash(loc: Loc) -> Self {
     Self::new(TokenKind::Slash, loc)
   }
+  fn less(loc: Loc) -> Self {
+    Self::new(TokenKind::Less, loc)
+  }
+  fn equal(loc: Loc) -> Self {
+    Self::new(TokenKind::Equal, loc)
+  }
+  fn greater(loc: Loc) -> Self {
+    Self::new(TokenKind::Greater, loc)
+  }
+  fn and(loc: Loc) -> Self {
+    Self::new(TokenKind::And, loc)
+  }
+  fn or(loc: Loc) -> Self {
+    Self::new(TokenKind::Or, loc)
+  }
   fn lparen(loc: Loc) -> Self {
     Self::new(TokenKind::LParen, loc)
   }
   fn rparen(loc: Loc) -> Self {
     Self::new(TokenKind::RParen, loc)
+  }
+  fn lbrace(loc: Loc) -> Self {
+    Self::new(TokenKind::LBrace, loc)
+  }
+  fn rbrace(loc: Loc) -> Self {
+    Self::new(TokenKind::RBrace, loc)
+  }
+  fn lbracket(loc: Loc) -> Self {
+    Self::new(TokenKind::LBracket, loc)
+  }
+  fn rbracket(loc: Loc) -> Self {
+    Self::new(TokenKind::RBracket, loc)
   }
 }
 
@@ -86,8 +122,13 @@ impl UniOp {
 pub enum BinOpKind {
   Add,
   Sub,
-  Mult,
+  Mul,
   Div,
+  Lt,
+  Equal,
+  Gt,
+  And,
+  Or,
 }
 
 pub type BinOp = Annot<BinOpKind>;
@@ -99,11 +140,26 @@ impl BinOp {
   fn sub(loc: Loc) -> Self {
     Self::new(BinOpKind::Sub, loc)
   }
-  fn mult(loc: Loc) -> Self {
-    Self::new(BinOpKind::Mult, loc)
+  fn mul(loc: Loc) -> Self {
+    Self::new(BinOpKind::Mul, loc)
   }
   fn div(loc: Loc) -> Self {
     Self::new(BinOpKind::Div, loc)
+  }
+  fn lt(loc: Loc) -> Self {
+    Self::new(BinOpKind::Lt, loc)
+  }
+  fn equal(loc: Loc) -> Self {
+    Self::new(BinOpKind::Equal, loc)
+  }
+  fn gt(loc: Loc) -> Self {
+    Self::new(BinOpKind::Gt, loc)
+  }
+  fn and(loc: Loc) -> Self {
+    Self::new(BinOpKind::And, loc)
+  }
+  fn or(loc: Loc) -> Self {
+    Self::new(BinOpKind::Or, loc)
   }
 }
 

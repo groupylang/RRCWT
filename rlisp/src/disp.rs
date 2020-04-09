@@ -14,8 +14,17 @@ impl fmt::Display for TokenKind {
       Minus => write!(f, "-"),
       Asterisk => write!(f, "*"),
       Slash => write!(f, "/"),
+      Less => write!(f, "<"),
+      Equal => write!(f, "="),
+      And => write!(f, "&"),
+      Or => write!(f, "|"),
+      Greater => write!(f, ">"),
       LParen => write!(f, "("),
       RParen => write!(f, ")"),
+      LBrace => write!(f, "{{"),
+      RBrace => write!(f, "}}"),
+      LBracket => write!(f, "["),
+      RBracket => write!(f, "]"),
     }
   }
 }

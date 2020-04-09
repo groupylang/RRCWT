@@ -185,10 +185,9 @@ pub struct BinaryReader {
 }
 impl BinaryReader {
   fn open(file_name: &str) -> BinaryReader {
-    let extended = String::from(file_name) + ".wc";
-    let error_message = String::from("error | FileNotFound: ") + &extended;
+    let extended = &format!("{}.wc", file_name);
     BinaryReader {
-      reader: BufReader::new(File::open(extended).expect(&error_message))
+      reader: BufReader::new(File::open(extended).expect(&format!("error | FileNotFound: {}", extended)))
     }
   }
   #[allow(dead_code)]

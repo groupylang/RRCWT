@@ -1,21 +1,22 @@
+.SILENT: build clean build_java build_rust
+.PHONY: build clean build_java build_rust
+
+build: build_java build_rust
 ifeq ($(OS), Windows_NT)
-.PHONY: build
-build:
-	@javac -sourcepath incremental/src -d javaout incremental/src/driver/Driver.java
-	@cargo build
-	@copy target/debug/driver.exe rrcwt.exe
-.PHONY: clean
-clean:
-	@rmdir /q /s tmp
-	@del /F /Q rrcwt.exe
+	copy target/debug/driver.exe rrcwt.exe
 else
-.PHONY: build
-build:
-	@javac -sourcepath incremental/src -d javaout incremental/src/driver/Driver.java
-	@cargo build
-	@cp target/debug/driver rrcwt
-.PHONY: clean
-clean:
-	@rm -f -r tmp
-	@rm -f rrcwt
+	cp target/debug/driver rrcwt
 endif
+clean:
+ifeq ($(OS), Windows_NT)
+	rmdir /q /s tmp
+	del /F /Q rrcwt.exe
+else
+	rm -f -r tmp
+	rm -f rrcwt
+endif
+
+build_java:
+	javac -sourcepath incremental/src -d javaout incremental/src/driver/Driver.java
+build_rust:
+	cargo build
