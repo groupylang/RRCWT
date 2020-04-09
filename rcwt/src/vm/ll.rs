@@ -1,4 +1,4 @@
-//! TODO comment
+//! link and load `wc` files
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, BufRead, BufReader};
@@ -79,6 +79,7 @@ atoms!(
   RelocationHeader: { symbol_name: CString, segment_id: usize, base_address: usize }
 );
 
+/// Scanner which scan, load and link `wc` files
 #[derive(Default)]
 pub struct Scanner {
   symbols: HashMap<String, DefinedHeader>,
@@ -180,6 +181,7 @@ impl Scanner {
 
 type CString = String;
 
+/// wrapper of BufReader
 pub struct BinaryReader {
   reader: BufReader<File>
 }
@@ -198,6 +200,7 @@ impl BinaryReader {
       _ => None
     }
   }
+  /// read [0u8; 1] and convert to u8
   fn read_u8(&mut self) -> Option<u8> {
     let mut buf = [0u8; 1];
     match self.reader.read_exact(&mut buf) {
@@ -205,6 +208,7 @@ impl BinaryReader {
       Err(_) => None
     }
   }
+  /// read [0u8; 2] and convert to u16
   fn read_u16(&mut self) -> Option<u16> {
     let mut buf = [0u8; 2];
     match self.reader.read_exact(&mut buf) {
@@ -215,6 +219,7 @@ impl BinaryReader {
       Err(_) => None
     }
   }
+  /// read [0u8; 4] and convert to u32
   fn read_u32(&mut self) -> Option<u32> {
     let mut buf = [0u8; 4];
     match self.reader.read_exact(&mut buf) {
@@ -227,6 +232,7 @@ impl BinaryReader {
       Err(_) => None
     }
   }
+  /// read CString(terminated by null-byte)
   #[allow(non_snake_case)]
   fn read_CString(&mut self) -> Option<String> {
     let mut buf = Vec::new();

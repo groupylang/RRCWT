@@ -1,4 +1,4 @@
-//! TODO comment
+//! scan and execute `wc` files
 use super::ll::Scanner;
 use std::ffi::CStr;
 use super::{env, Procedure, VirtualMachine};
@@ -14,7 +14,7 @@ impl VirtualMachine {
     scanner.load(file_name);
     scanner.setup()
   }
-  // wrapper of v_exec()
+  /// wrapper of v_exec()
   pub fn execute(&mut self) {
     #[link(name="core")]
     extern "C" {
@@ -34,7 +34,7 @@ impl VirtualMachine {
   pub fn print_str(arg: *const i8) {
     print!("{}", unsafe { CStr::from_ptr(arg) }.to_str().expect("error | PrintInvalidString"));
   }
-  // count how many times vm calls the virtual function and check if it is hot
+  /// count how many times vm calls the virtual function and check if it is hot
   #[no_mangle]
   pub fn is_hot(&mut self, pc: *const u32) -> u8 {
     match self.hot_spots.get(&(pc as usize)) {
@@ -115,7 +115,7 @@ impl VirtualMachine {
       }
     }
   }
-  // execute native function
+  /// execute native function
   #[no_mangle]
   pub fn n_exec(&mut self, pc: *const u32, e: &env) {
     self.procedures.get(&(pc as usize)).expect(&format!("error | ProcedureNotFound: {}", pc as usize))(e);

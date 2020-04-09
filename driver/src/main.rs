@@ -1,3 +1,4 @@
+//! command-line driver for RRCWT
 extern crate serde;
 extern crate clap;
 extern crate rcwt;
@@ -78,14 +79,14 @@ impl ConfigBuilder {
   }
 }
 
-fn write(file_name: &str, config: Config) {
+fn write_config(file_name: &str, config: Config) {
   let input = std::env::current_dir().unwrap().join(file_name);
   let workspace = input.parent().unwrap();
   let writer = BufWriter::new(File::create(workspace.join("config.yml")).expect("error | ConfigNotFound"));
   serde_yaml::to_writer(writer, &config).expect("error | InvalidYamlFile");
 }
 
-fn read(path: &str) -> Config {
+fn read_config(path: &str) -> Config {
   let reader = BufReader::new(
     File::open(std::env::current_dir().unwrap().join(path).join("config.yml")
   ).expect("error | ConfigNotFound"));
@@ -96,7 +97,7 @@ fn read(path: &str) -> Config {
 fn main() {
   let driver = App::new("rrcwt")
   .version("0.1.0")
-  .author("sKyrBBit <iamskyrabbit@gmail.com>")
+  .author("skyrabbit <iamskyrabbit@gmail.com>")
   .about("a toy processor")
   .subcommand(SubCommand::with_name("new")
     .about("Creates new workspace")
@@ -163,11 +164,11 @@ fn main() {
       .runner_input(matches.value_of("runner-input"))
       .jit(matches.is_present("jit"))
       .build();
-    write(main.to_str().unwrap(), config);
+    write_config(main.to_str().unwrap(), config);
   }
   if let Some(ref matches) = matches.subcommand_matches("build") {
     let workspace = matches.value_of("workspace").unwrap();
-    let config = read(workspace);
+    let config = read_config(workspace);
     if config.builder.debug {
       Command::new("java")
         .args(&["-classpath", "javaout", "driver/Driver", &config.builder.input, "-d"])
@@ -180,7 +181,7 @@ fn main() {
   }
   if let Some(ref matches) = matches.subcommand_matches("run") {
     let workspace = matches.value_of("workspace").unwrap();
-    let config = read(workspace);
+    let config = read_config(workspace);
     if config.runner.jit {
       VirtualMachine::scan(&config.runner.input).execute()
     } else {
