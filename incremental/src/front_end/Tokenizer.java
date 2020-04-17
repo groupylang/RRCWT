@@ -1,18 +1,17 @@
 package front_end;
 
 import front_end.token.*;
-import front_end.token.Number;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class Tokenizer {
     private static String[] lines;
-    private char[] input;
+    private final char[] input;
     private int position;
     private static int line_no;
     private static int column_no;
-    private Map<String, Word> words;
+    private final Map<String, Word> words;
     private TokenizerState state;
 
     Tokenizer(final String input) {
@@ -30,7 +29,12 @@ public class Tokenizer {
         reserve(new Word("break",   Tag.BREAK));
         reserve(new Word("return",  Tag.RET));
         reserve(new Word("print",   Tag.PRINT));
-        reserve(new Word("Integer", Tag.INT));
+        reserve(new Word("true",    Tag.TRUE));
+        reserve(new Word("false",   Tag.FALSE));
+        reserve(Type.Integer);
+        reserve(Type.Float);
+        reserve(Type.Character);
+        reserve(Type.Boolean);
     }
     private void reserve(final Word word) {
         words.put(word.lexeme, word);
@@ -109,7 +113,17 @@ public class Tokenizer {
                         } else {
                             return new Token('/');
                         }
-                    case '\"':
+                    case '\'':
+                        position++; column_no++;
+                        char c = input[position];
+                        position++; column_no++;
+                        if (input[position] == '\'') {
+                            position++; column_no++;
+                            return new CharacterLiteral(c);
+                        } else {
+                            throw new ParsingException("character literal isn't terminated");
+                        }
+                    case '"':
                         position++; column_no++;
                         state = TokenizerState.STRING;
                         return tokenize();
@@ -121,7 +135,7 @@ public class Tokenizer {
                         position++; column_no++;
                     } while (Character.isDigit(input[position]));
                     if (input[position] != '.') {
-                        return new Number(int_value);
+                        return new IntegerLiteral(int_value);
                     }
 
                     float float_value = int_value;
@@ -130,7 +144,7 @@ public class Tokenizer {
                         if (!Character.isDigit(input[position])) break;
                         float_value += Character.digit(input[position], 10) / Math.pow(10, i + 1);
                     }
-                    return new Real(float_value);
+                    return new FloatLiteral(float_value);
                 } else if (Character.isLetter(input[position])) {
                     StringBuilder builder = new StringBuilder();
                     do {
@@ -154,13 +168,13 @@ public class Tokenizer {
                 while (input[position] != '\"') {
                     builder.append(input[position]);
                     if (input[position] == '\n') {
-                        throw new ParsingException("string literal isn't multi-line token");
+                        throw new ParsingException("string literal isn't terminated");
                     }
                     position++; column_no++;
                 }
                 position++; column_no++;
                 state = TokenizerState.STANDARD;
-                return new String_(builder.toString());
+                return new StringLiteral(builder.toString());
             case SHORT_COMMENT:
                 while (input[position] != '\n') {
                     position++; column_no++;

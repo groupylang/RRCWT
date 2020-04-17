@@ -22,7 +22,12 @@ fn main() {
   match args.len() {
     2 if args[1].eq(&String::from("-h")) => help(),
     2 if args[1].eq(&String::from("-v")) => version(),
-    2 => VirtualMachine::scan(&args[1]).execute(),
+    2 => {
+      match VirtualMachine::scan(&args[1]) {
+        Ok(mut vm) => vm.execute(),
+        Err(msg) => eprintln!("{:#?}", msg)
+      }
+    },
     _ => help(),
   };
 }

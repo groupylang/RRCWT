@@ -3,14 +3,14 @@
 
 build: build_java build_rust
 ifeq ($(OS), Windows_NT)
-	copy target/debug/driver.exe rrcwt.exe
+	-copy /B /Y target/debug/driver.exe rrcwt.exe
 else
 	cp target/debug/driver rrcwt
 endif
 clean:
 ifeq ($(OS), Windows_NT)
-	rmdir /q /s tmp
-	del /F /Q rrcwt.exe
+	-rd /q /s tmp
+	-del /Q rrcwt.exe
 else
 	rm -f -r tmp
 	rm -f rrcwt

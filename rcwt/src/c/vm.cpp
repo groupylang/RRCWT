@@ -35,7 +35,7 @@ void jit_asm(std::unordered_map<size_t, procedure>& procs, size_t id, const char
   fout << jit_str;
   fout.flush();
   system(format("clang++ tmp/jit%zu.cpp -o tmp/jit%zu.so -Wall -Wextra -g -shared -fPIC", id, id).c_str());
-  auto handle = LoadLibrary(reinterpret_cast<LPCWSTR>(format("tmp/jit%zu.so", id).c_str()));
+  auto handle = LoadLibraryA(format("tmp/jit%zu.so", id).c_str());
   auto f = reinterpret_cast<procedure>(GetProcAddress(handle, "f"));
   procs[id] = f;
 }

@@ -3,12 +3,13 @@ use super::ll::Scanner;
 use std::ffi::CStr;
 use super::{env, Procedure, VirtualMachine};
 use std::io::{Write, BufWriter};
+use std::io;
 use std::fs::File;
 use std::process::Command;
 use libloading::{Library, Symbol};
 
 impl VirtualMachine {
-  pub fn scan(file_name: &str) -> VirtualMachine {
+  pub fn scan(file_name: &str) -> io::Result<VirtualMachine> {
     let mut scanner = Scanner::new();
     scanner.initialize();
     scanner.load(file_name);
@@ -53,6 +54,8 @@ impl VirtualMachine {
     }
   }
   #[cfg(target_os="windows")]
+  /// # Panics
+  /// if impossible to write to `.c` and `.dll` file, created during jit-assembling
   #[no_mangle]
   pub fn jit_assemble(&mut self, pc: *const u32, jit_str: *const i8) {
     let file_c = &format!("../tmp/jit{}.c", pc as usize);
@@ -85,6 +88,8 @@ impl VirtualMachine {
     }
   }
   #[cfg(target_os="linux")]
+  /// # Panics
+  /// if impossible to write to `.c` and `.so` file, created during jit-assembling
   #[no_mangle]
   pub fn jit_assemble(&mut self, pc: *const u32, jit_str: *const i8) {
     let file_c = &format!("../tmp/jit{}.c", pc as usize);

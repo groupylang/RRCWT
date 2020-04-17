@@ -1,9 +1,9 @@
 package ast;
 
-public class Number extends Expression {
-    final int value;
-    public Number(final int value) {
-        super(Integer.toString(value));
+public class CharacterLiteral extends Expression {
+    final char value;
+    public CharacterLiteral(final char value) {
+        super("" + value);
         this.value = value;
     }
     @Override
@@ -14,10 +14,6 @@ public class Number extends Expression {
     }
     @Override
     public String toS(int tab) {
-        return "" + value;
-    }
-    @Override
-    public ir.Operand toIR() {
-        return new ir.Immediate(value);
+        return "'" + value + "'";
     }
 }

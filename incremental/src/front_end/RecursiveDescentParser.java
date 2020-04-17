@@ -1,9 +1,6 @@
 package front_end;
 
-import ast.*;
-import ast.String_;
 import front_end.token.*;
-import front_end.token.Number;
 
 import java.util.*;
 
@@ -38,11 +35,31 @@ public class RecursiveDescentParser implements Parser {
     }
     private int integer() throws ParsingException {
         final int value;
-        if (match(Tag.NUM)) {
-            value = ((Number)now).value;
+        if (match(Tag.INTEGER)) {
+            value = ((IntegerLiteral)now).value;
             now = tokenizer.tokenize();
         } else {
-            throw new ParsingException("expecting `NUM`, but found `" + now.tag + "`");
+            throw new ParsingException("expecting `INTEGER`, but found `" + now.tag + "`");
+        }
+        return value;
+    }
+    private float float_() throws ParsingException {
+        final float value;
+        if (match(Tag.FLOAT)) {
+            value = ((FloatLiteral)now).value;
+            now = tokenizer.tokenize();
+        } else {
+            throw new ParsingException("expecting `FLOAT`, but found `" + now.tag + "`");
+        }
+        return value;
+    }
+    private char character() throws ParsingException {
+        final char value;
+        if (match(Tag.CHARACTER)) {
+            value = ((CharacterLiteral)now).value;
+            now = tokenizer.tokenize();
+        } else {
+            throw new ParsingException("expecting `CHARACTER`, but found `" + now.tag + "`");
         }
         return value;
     }
@@ -58,8 +75,8 @@ public class RecursiveDescentParser implements Parser {
     }
     private String string() throws ParsingException {
         final String string;
-        if (match(Tag.STR)) {
-            string = ((front_end.token.String_)now).value;
+        if (match(Tag.STRING)) {
+            string = ((front_end.token.StringLiteral)now).value;
             if (!strings.contains(string)) {
                 strings.add(string);
             }
@@ -75,14 +92,14 @@ public class RecursiveDescentParser implements Parser {
         this.current = null;
         this.strings = new ArrayList<>();
 
-        final List<FunctionDeclare> function_declarations = new ArrayList<>();
-        while (match(Tag.INT)) {
-            final FunctionDeclare function_declaration = function_declaration();
+        final List<ast.FunctionDeclare> function_declarations = new ArrayList<>();
+        while (match(Tag.TYPE)) {
+            final ast.FunctionDeclare function_declaration = function_declaration();
             function_declarations.add(function_declaration);
         }
         return new ParserResult(function_declarations, strings);
     }
-    private FunctionDeclare function_declaration() throws ParsingException {
+    private ast.FunctionDeclare function_declaration() throws ParsingException {
         final SymbolList symbols = new SymbolList(current);
         current = symbols;
         type();
@@ -96,127 +113,139 @@ public class RecursiveDescentParser implements Parser {
             }
         }
         consume(')');
-        final Closure closure = closure();
+        final ast.Closure closure = closure();
         current = current.enclosing;
-        return new FunctionDeclare(name, symbols, closure);
+        return new ast.FunctionDeclare(name, symbols, closure);
     }
-    private Closure closure() throws ParsingException {
+    private ast.Closure closure() throws ParsingException {
         final SymbolList symbols = new SymbolList(current);
         current = symbols;
         consume('{');
-        while (match(Tag.INT)) {
+        while (match(Tag.TYPE)) {
             variable_declaration();
             consume(';');
         }
-        final List<Statement> statements = new ArrayList<>();
+        final List<ast.Statement> statements = new ArrayList<>();
         while (!match('}')) {
-            Statement statement = statement();
+            ast.Statement statement = statement();
             statements.add(statement);
         }
         consume('}');
         current = current.enclosing;
-        return new Closure(symbols, statements);
+        return new ast.Closure(symbols, statements);
     }
     private void variable_declaration() throws ParsingException {
         type();
         String name = identifier();
         current.declare(name);
     }
-    private Statement statement() throws ParsingException {
+    private ast.Statement statement() throws ParsingException {
         if (match(Tag.IF)) {
             consume(Tag.IF);
             consume('(');
-            final Expression condition = expression();
+            final ast.Expression condition = expression();
             consume(')');
-            final Closure then_closure = closure();
-            return new If(condition, then_closure);
+            final ast.Closure then_closure = closure();
+            return new ast.If(condition, then_closure);
         } else if (match(Tag.WHILE)) {
             consume(Tag.WHILE);
             consume('(');
-            final Expression condition = expression();
+            final ast.Expression condition = expression();
             consume(')');
-            final Closure closure = closure();
-            return new While(condition, closure);
+            final ast.Closure closure = closure();
+            return new ast.While(condition, closure);
         } else if (match(Tag.RET)) {
             consume(Tag.RET);
-            Expression expression = expression();
+            ast.Expression expression = expression();
             consume(';');
-            return new Return(expression);
+            return new ast.Return(expression);
         } else if (match(Tag.PRINT)) {
             consume(Tag.PRINT);
-            Expression expression;
-            if (match(Tag.STR)) {
+            ast.Expression expression;
+            if (match(Tag.STRING)) {
                 final String string= string();
-                expression = new String_(string, strings.indexOf(string));
+                expression = new ast.StringLiteral(string, strings.indexOf(string));
             } else {
                 expression = expression();
             }
             consume(';');
-            return new Print(expression);
+            return new ast.Print(expression);
         } else {
             final String name = identifier();
             consume('=');
-            final Expression expression = expression();
+            final ast.Expression expression = expression();
             consume(';');
 
             final LocalVariable variable = current.get(name);
             variable.update();
-            return new Assign(new VariableCall(variable), expression);
+            return new ast.Assign(new ast.VariableCall(variable), expression);
         }
     }
-    private Expression expression() throws ParsingException {
-        Expression left = term();
+    private ast.Expression expression() throws ParsingException {
+        ast.Expression left = term();
         while (true) {
             if (match('+')) {
                 consume('+');
-                final Expression right = term();
-                left =  new BinaryOperator("+", left, right);
+                final ast.Expression right = term();
+                left =  new ast.BinaryOperator("+", left, right);
             } else if (match('-')) {
                 consume('-');
-                final Expression right = term();
-                left = new BinaryOperator("-", left, right);
+                final ast.Expression right = term();
+                left = new ast.BinaryOperator("-", left, right);
             } else {
                 return left;
             }
         }
     }
-    private Expression term() throws ParsingException {
-        Expression left = unary();
+    private ast.Expression term() throws ParsingException {
+        ast.Expression left = unary();
         while (true) {
             if (match('*')) {
                 consume('*');
-                final Expression right = unary();
-                left = new BinaryOperator("*", left, right);
+                final ast.Expression right = unary();
+                left = new ast.BinaryOperator("*", left, right);
             } else if (match('/')) {
                 consume('/');
-                final Expression right = unary();
-                left = new BinaryOperator("/", left, right);
+                final ast.Expression right = unary();
+                left = new ast.BinaryOperator("/", left, right);
             } else {
                 return left;
             }
         }
     }
-    private Expression unary() throws ParsingException {
+    private ast.Expression unary() throws ParsingException {
         if (match('-')) {
             consume('-');
-            final Expression operand = factor();
-            return new UnaryOperator("-", operand);
+            final ast.Expression operand = factor();
+            return new ast.UnaryOperator("-", operand);
         } else {
-            final Expression expression = factor();
+            final ast.Expression expression = factor();
             return expression;
         }
     }
-    private Expression factor() throws ParsingException {
-        if (match(Tag.NUM)) {
+    private ast.Expression factor() throws ParsingException {
+        if (match(Tag.INTEGER)) {
             final int value = integer();
-            return new ast.Number(value);
+            return new ast.IntegerLiteral(value);
+        } else if (match(Tag.FLOAT)) {
+            final float value = float_();
+            return new ast.FloatLiteral(value);
+        } else if (match(Tag.CHARACTER)) {
+            final char value = character();
+            return new ast.CharacterLiteral(value);
+        } else if (match(Tag.TRUE)) {
+            consume(Tag.TRUE);
+            return new ast.BooleanLiteral(true);
+        } else if (match(Tag.FALSE)) {
+            consume(Tag.TRUE);
+            return new ast.BooleanLiteral(false);
         } else if (match(Tag.ID)) {
             final String name = identifier();
             if (match('(')) {
                 consume('(');
-                final List<Expression> arguments = new ArrayList<>();
+                final List<ast.Expression> arguments = new ArrayList<>();
                 if (!match(')')) {
-                    Expression expression = expression();
+                    ast.Expression expression = expression();
                     arguments.add(expression);
                     while (match(',')) {
                         consume(',');
@@ -225,26 +254,22 @@ public class RecursiveDescentParser implements Parser {
                     }
                 }
                 consume(')');
-                return new FunctionCall(name, arguments);
+                return new ast.FunctionCall(name, arguments);
             } else {
-                return new VariableCall(current.get(name));
+                return new ast.VariableCall(current.get(name));
             }
         } else {
             consume('(');
-            final Expression expression = expression();
+            final ast.Expression expression = expression();
             consume(')');
             return expression;
         }
     }
     private void type() throws ParsingException {
-        consume(Tag.INT);
+        consume(Tag.TYPE);
     }
     public static String tab(int tab) {
         // TODO improve tab system
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < tab; i++) {
-            builder.append(' ');
-        }
-        return builder.toString();
+        return " ".repeat(Math.max(0, tab));
     }
 }

@@ -1,8 +1,8 @@
 package ast;
 
-public class String_ extends Expression {
+public class StringLiteral extends Expression {
     private final int offset;
-    public String_(final String value, final int offset) {
+    public StringLiteral(final String value, final int offset) {
         super(value);
         this.offset = offset;
     }

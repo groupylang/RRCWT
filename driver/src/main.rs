@@ -8,7 +8,6 @@ use clap::{App, Arg, SubCommand};
 
 use std::fs::{File, create_dir_all};
 use std::io::{BufReader, BufWriter, Write};
-use std::path::Path;
 use std::process::Command;
 
 use rcwt::vm::VirtualMachine;
@@ -183,9 +182,15 @@ fn main() {
     let workspace = matches.value_of("workspace").unwrap();
     let config = read_config(workspace);
     if config.runner.jit {
-      VirtualMachine::scan(&config.runner.input).execute()
+      match VirtualMachine::scan(&config.runner.input) {
+        Ok(mut vm) => vm.execute(),
+        Err(msg) => eprintln!("{:#?}", msg)
+      }
     } else {
-      VirtualMachine::scan(&config.runner.input).execute()
+      match VirtualMachine::scan(&config.runner.input) {
+        Ok(mut vm) => vm.execute(),
+        Err(msg) => eprintln!("{:#?}", msg)
+      }
     }
   }
 }

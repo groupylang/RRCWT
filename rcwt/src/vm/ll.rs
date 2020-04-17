@@ -2,6 +2,7 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, BufRead, BufReader};
+use std::io;
 use super::VirtualMachine;
 
 macro_rules! read {
@@ -53,8 +54,8 @@ macro_rules! atoms_inner {
     impl BinaryReader {
       paste::item! {
         #[allow(non_snake_case)]
-        pub fn [<read_$i>](&mut self) -> Option<$i> {
-          Some($i { $($j: self.[<read_$k>]().expect("error | InvalidFormat")),* })
+        pub fn [<read_$i>](&mut self) -> io::Result<$i> {
+          Ok($i { $($j: self.[<read_$k>]().expect("error | InvalidFormat")),* })
         }
       }
     }
@@ -64,7 +65,7 @@ macro_rules! atoms_inner {
     impl BinaryReader {
       paste::item! {
         #[allow(non_snake_case)]
-        pub fn [<read_$i>](&mut self) -> Option<$i> {
+        pub fn [<read_$i>](&mut self) -> io::Result<$i> {
           self.[<read_$j>]().map(|n| n as $i)
         }
       }
@@ -153,11 +154,11 @@ impl Scanner {
         .collect::<Vec<UndefinedHeader>>();
     }
   }
-  pub fn setup(&mut self) -> VirtualMachine {
+  pub fn setup(&mut self) -> io::Result<VirtualMachine> {
     // TODO verify
     // patch
     for _r in &self.relocations {
-      let _s = self.symbols.get(&_r.symbol_name).unwrap();
+      let _s = self.symbols.get(&_r.symbol_name).expect(&format!("SymbolNotFound: {}", &_r.symbol_name));
       match _r.segment_id {
         0 => self.text[_r.base_address] = _s.base_address as u8,
         1 => self.data[_r.base_address] = _s.base_address as u8,
@@ -166,13 +167,13 @@ impl Scanner {
     }
     // prepare for jit
     use std::path::Path;
-    std::fs::create_dir_all(Path::new("tmp")).unwrap();
+    std::fs::create_dir_all(Path::new("tmp"))?;
 
-    VirtualMachine {
+    Ok(VirtualMachine {
       text: Box::from(std::mem::take(&mut self.text)),
       data: Box::from(std::mem::take(&mut self.data)),
       .. Default::default()
-    }
+    })
   }
   pub fn get_entry_point(&mut self) -> usize {
     self.symbols.get("main\0").expect("error | EntryPointNotFound").base_address
@@ -193,53 +194,43 @@ impl BinaryReader {
     }
   }
   #[allow(dead_code)]
-  fn read_to_end(&mut self) -> Option<Vec<u8>> {
+  fn read_to_end(&mut self) -> io::Result<Vec<u8>> {
     let mut buf = Vec::with_capacity(32);
-    match self.reader.read_to_end(&mut buf) {
-      Ok(n) if n > 0 => Some(buf),
-      _ => None
-    }
+    self.reader.read_to_end(&mut buf)?;
+    Ok(buf)
   }
   /// read [0u8; 1] and convert to u8
-  fn read_u8(&mut self) -> Option<u8> {
+  fn read_u8(&mut self) -> io::Result<u8> {
     let mut buf = [0u8; 1];
-    match self.reader.read_exact(&mut buf) {
-      Ok(()) => Some(buf[0]),
-      Err(_) => None
-    }
+    self.reader.read_exact(&mut buf)?;
+    Ok(buf[0])
   }
   /// read [0u8; 2] and convert to u16
-  fn read_u16(&mut self) -> Option<u16> {
+  fn read_u16(&mut self) -> io::Result<u16> {
     let mut buf = [0u8; 2];
-    match self.reader.read_exact(&mut buf) {
-      Ok(()) => Some(
-        ((buf[0] as u16) << 8)
-        + buf[1] as u16
-      ),
-      Err(_) => None
-    }
+    self.reader.read_exact(&mut buf)?;
+    Ok(
+      ((buf[0] as u16) << 8)
+      + buf[1] as u16
+    )
   }
   /// read [0u8; 4] and convert to u32
-  fn read_u32(&mut self) -> Option<u32> {
+  fn read_u32(&mut self) -> io::Result<u32> {
     let mut buf = [0u8; 4];
-    match self.reader.read_exact(&mut buf) {
-      Ok(()) => Some(
-        ((buf[0] as u32) << 24)
-        + ((buf[1] as u32) << 16)
-        + ((buf[2] as u32) << 8)
-        + buf[3] as u32
-      ),
-      Err(_) => None
-    }
+    self.reader.read_exact(&mut buf)?;
+    Ok(
+      ((buf[0] as u32) << 24)
+      + ((buf[1] as u32) << 16)
+      + ((buf[2] as u32) << 8)
+      + buf[3] as u32
+    )
   }
   /// read CString(terminated by null-byte)
   #[allow(non_snake_case)]
-  fn read_CString(&mut self) -> Option<String> {
+  fn read_CString(&mut self) -> io::Result<String> {
     let mut buf = Vec::new();
-    match self.reader.read_until(b'\0', &mut buf) {
-      Ok(n) if n > 0 => Some(String::from_utf8(buf).expect("error | StringInvalid")),
-      _ => None
-    }
+    self.reader.read_until(b'\0', &mut buf)?;
+    Ok(String::from_utf8(buf).expect("error | StringInvalid"))
   }
 }
 

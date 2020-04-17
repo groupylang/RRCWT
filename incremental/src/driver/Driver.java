@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Driver {
+public final class Driver {
     private static void help() {
         System.out.println("select a file to compile or 1 option from the ones below:");
         System.out.println("  \"-h\": show help");
@@ -29,7 +29,7 @@ public class Driver {
         System.out.println("  a toy language processor");
         System.out.println();
         System.out.println("  version = \"0.1.0\"");
-        System.out.println("  authors = [\"sKyrBBit <iamskyrabbit@gmail.com>\"]");
+        System.out.println("  authors = [\"skyrabbit <iamskyrabbit@gmail.com>\"]");
         System.out.println("  license = \"MIT\"");
     }
 
@@ -122,39 +122,33 @@ public class Driver {
                 .forEach(assembly_result::append);
         Writer.use("tmp/" + file_name + ".s", writer -> writer.write(assembly_result.toString()));
     }
+    public static void compile(final String file_name) throws IOException {
+        new File(Paths.get("tmp/" + file_name).getParent().toString()).mkdirs();
+        ParserResult ast_result = grp2ast(file_name);
+        List<ir.Function> ir_result = ast2ir(ast_result.ast);
+//                middle_end.Module ir_mid_result = ast2ir_mid(ast_result.ast);
+//                ir_mid_result.toAssembly();
+//                System.out.println(AssemblyBuilder.build());
+        ir2wc_and_put(file_name, ir_result, ast_result.strings);
+        ir2assembly_and_put(file_name, ir_result, ast_result.strings);
+    }
+    public static void compile_d(final String file_name) throws IOException {
+        new File(Paths.get("tmp/" + file_name).getParent().toString()).mkdirs();
+        ParserResult ast_result = grp2ast(file_name);
+        put_ast(file_name, ast_result.ast);
+        List<ir.Function> ir_result = ast2ir(ast_result.ast);
+        put_ir(file_name, ir_result, ast_result.strings);
+        ir2wc_and_put(file_name, ir_result, ast_result.strings);
+        ir2assembly_and_put(file_name, ir_result, ast_result.strings);
+    }
     public static void main(String[] args) throws IOException {
         if (args.length == 1) {
             if (args[0].equals("-h")) help();
             else if (args[0].equals("-v")) version();
-            else {
-                new File(Paths.get("tmp/" + args[0]).getParent().toString()).mkdirs();
-                ParserResult ast_result = grp2ast(args[0]);
-                List<ir.Function> ir_result = ast2ir(ast_result.ast);
-//                middle_end.Module ir_mid_result = ast2ir_mid(ast_result.ast);
-//                ir_mid_result.toAssembly();
-//                System.out.println(AssemblyBuilder.build());
-                ir2wc_and_put(args[0], ir_result, ast_result.strings);
-                ir2assembly_and_put(args[0], ir_result, ast_result.strings);
-            }
+            else compile(args[0]);
         } else if (args.length == 2) {
-            if (args[0].equals("-d")) {
-                new File(Paths.get("tmp/" + args[1]).getParent().toString()).mkdirs();
-                ParserResult ast_result = grp2ast(args[1]);
-                put_ast(args[1], ast_result.ast);
-                List<ir.Function> ir_result = ast2ir(ast_result.ast);
-                put_ir(args[1], ir_result, ast_result.strings);
-                ir2wc_and_put(args[1], ir_result, ast_result.strings);
-                ir2assembly_and_put(args[1], ir_result, ast_result.strings);
-            }
-            else if (args[1].equals("-d")) {
-                new File(Paths.get("tmp/" + args[0]).getParent().toString()).mkdirs();
-                ParserResult ast_result = grp2ast(args[0]);
-                put_ast(args[0], ast_result.ast);
-                List<ir.Function> ir_result = ast2ir(ast_result.ast);
-                put_ir(args[0], ir_result, ast_result.strings);
-                ir2wc_and_put(args[0], ir_result, ast_result.strings);
-                ir2assembly_and_put(args[0], ir_result, ast_result.strings);
-            }
+            if (args[0].equals("-d")) compile_d(args[1]);
+            else if (args[1].equals("-d")) compile_d(args[0]);
             else help();
         } else {
             help();

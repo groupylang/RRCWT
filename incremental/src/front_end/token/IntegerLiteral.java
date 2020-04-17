@@ -1,9 +1,9 @@
 package front_end.token;
 
-public class Number extends Token {
+public class IntegerLiteral extends Token {
     public final int value;
-    public Number(int value) {
-        super(Tag.NUM);
+    public IntegerLiteral(final int value) {
+        super(Tag.INTEGER);
         this.value = value;
     }
     @Override

@@ -1,9 +1,9 @@
 package front_end.token;
 
-public class Real extends Token {
+public class FloatLiteral extends Token {
     public final float value;
-    public Real(float value) {
-        super(Tag.REAL);
+    public FloatLiteral(final float value) {
+        super(Tag.FLOAT);
         this.value = value;
     }
     @Override
