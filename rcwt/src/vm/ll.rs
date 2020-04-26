@@ -111,16 +111,16 @@ impl Scanner {
       return
     }
     read! {
-      text_size: usize,
-      data_size: usize,
-      defined_count: usize,
-      undefined_count: usize,
-      relocation_count: usize,
-      defined_table: [DefinedHeader; defined_count],
-      undefined_table: [UndefinedHeader; undefined_count],
-      relocations: [RelocationHeader; relocation_count],
-      text: [u8; text_size],
-      data: [u8; data_size]
+      text_size        : usize,
+      data_size        : usize,
+      defined_count    : usize,
+      undefined_count  : usize,
+      relocation_count : usize,
+      defined_table    : [DefinedHeader; defined_count],
+      undefined_table  : [UndefinedHeader; undefined_count],
+      relocations      : [RelocationHeader; relocation_count],
+      text             : [u8; text_size],
+      data             : [u8; data_size]
     }
     self.text.append(&mut text);
     self.data.append(&mut data);
@@ -143,25 +143,25 @@ impl Scanner {
     });
     // resolve
     let mut us = undefined_table;
-    us = us.into_iter()
-    .filter(|u| !self.symbols.contains_key(&u.symbol_name))
-    .collect::<Vec<UndefinedHeader>>();
-    while !us.is_empty() {
-      us[0].module_name.pop();
+    loop {
+      us = self.remove_defined(us);
+      if us.is_empty() { break; }
       self.load(&us[0].module_name);
-      us = us.into_iter()
-        .filter(|u| !self.symbols.contains_key(&u.symbol_name))
-        .collect::<Vec<UndefinedHeader>>();
     }
+  }
+  fn remove_defined<'a>(&self, us: Vec<UndefinedHeader>) -> Vec<UndefinedHeader> {
+    us.into_iter()
+      .filter(|u| !self.symbols.contains_key(&u.symbol_name))
+      .collect::<Vec<UndefinedHeader>>()
   }
   pub fn setup(&mut self) -> io::Result<VirtualMachine> {
     // TODO verify
     // patch
-    for _r in &self.relocations {
-      let _s = self.symbols.get(&_r.symbol_name).expect(&format!("SymbolNotFound: {}", &_r.symbol_name));
-      match _r.segment_id {
-        0 => self.text[_r.base_address] = _s.base_address as u8,
-        1 => self.data[_r.base_address] = _s.base_address as u8,
+    for r in &self.relocations {
+      let s = self.symbols.get(&r.symbol_name).expect(&format!("SymbolNotFound: {}", &r.symbol_name));
+      match r.segment_id {
+        0 => self.text[r.base_address] = s.base_address as u8,
+        1 => self.data[r.base_address] = s.base_address as u8,
         _ => println!("warning | InvalidSegmentId in relocation header")
       }
     }
@@ -172,11 +172,9 @@ impl Scanner {
     Ok(VirtualMachine {
       text: Box::from(std::mem::take(&mut self.text)),
       data: Box::from(std::mem::take(&mut self.data)),
+      program_counter: self.symbols.get("main").expect("error | EntryPointNotFound").base_address,
       .. Default::default()
     })
-  }
-  pub fn get_entry_point(&mut self) -> usize {
-    self.symbols.get("main\0").expect("error | EntryPointNotFound").base_address
   }
 }
 
@@ -230,6 +228,7 @@ impl BinaryReader {
   fn read_CString(&mut self) -> io::Result<String> {
     let mut buf = Vec::new();
     self.reader.read_until(b'\0', &mut buf)?;
+    buf.pop(); // remove null-byte
     Ok(String::from_utf8(buf).expect("error | StringInvalid"))
   }
 }

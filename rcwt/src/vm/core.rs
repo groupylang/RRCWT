@@ -15,14 +15,14 @@ impl VirtualMachine {
     scanner.load(file_name);
     scanner.setup()
   }
-  /// wrapper of v_exec()
+  /// wrapper of virtual_execute()
   pub fn execute(&mut self) {
     #[link(name="core")]
     extern "C" {
-      fn v_exec(vm: *const u32, text: *const u8, data: *const u8, entry_point: u32) -> u8;
+      fn virtual_execute(vm: *const u32, text: *const u8, data: *const u8, entry_point: u32) -> u8;
     }
     let status = unsafe {
-      v_exec(self as *const VirtualMachine as *const u32, (*self.text).as_ptr(), (*self.data).as_ptr(), self.program_counter as u32)
+      virtual_execute(self as *const VirtualMachine as *const u32, (*self.text).as_ptr(), (*self.data).as_ptr(), self.program_counter as u32)
     };
     println!();
     println!("log | VMExitWithStatus: {}", status);
@@ -122,7 +122,7 @@ impl VirtualMachine {
   }
   /// execute native function
   #[no_mangle]
-  pub fn n_exec(&mut self, pc: *const u32, e: &env) {
+  pub fn native_execute(&mut self, pc: *const u32, e: &env) {
     self.procedures.get(&(pc as usize)).expect(&format!("error | ProcedureNotFound: {}", pc as usize))(e);
   }
 }

@@ -1,12 +1,5 @@
 #include "vm.h"
 
-#include <utility>
-#include <algorithm>
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <unordered_map>
-
 std::vector<uint32_t> vec_new() {
   auto tmp = std::vector<uint32_t>();
   tmp.reserve(32);
@@ -53,12 +46,12 @@ void jit_asm(std::unordered_map<size_t, procedure>& procs, size_t id, const char
 #endif
 
 // execute native function
-void n_exec(std::unordered_map<size_t, procedure>& procs, size_t id, env* e) {
+void native_execute(std::unordered_map<size_t, procedure>& procs, size_t id, env* e) {
   procs[id](e);
 }
 
 // execute virtual functions
-uint8_t v_exec(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point) {
+uint8_t virtual_execute(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point) {
   // initialize
   env e = {
     /* text         */ text,
@@ -363,7 +356,7 @@ uint8_t v_exec(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point)
     } NEXT;
     CASE(CALL) {
       jit_flag = is_hot(hot_spots, reinterpret_cast<size_t>(pc));
-      if (jit_flag == 2) { n_exec(procs, reinterpret_cast<size_t>(pc), &e); NEXT; }
+      if (jit_flag == 2) { native_execute(procs, reinterpret_cast<size_t>(pc), &e); NEXT; }
       push(&e, e.base_pointer);
       e.base_pointer = e.stack_pointer;
       e.stack_pointer += i.op0;
