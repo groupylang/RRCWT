@@ -51,17 +51,20 @@ void native_execute(std::unordered_map<size_t, procedure>& procs, size_t id, env
 }
 
 // execute virtual functions
-uint8_t virtual_execute(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point) {
+uint8_t virtual_execute(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t entry_point, uint32_t numRegisters) {
   // initialize
   env e = {
     /* text         */ text,
     /* data         */ data,
-    /* registers    */ (uint32_t*) calloc(1024, 4), // TODO
+    /* registers    */ (uint32_t*) calloc(numRegisters, 4), 
     /* stack        */ vec_new(),
     /* heap         */ vec_new(),
     /* stack_poiner */ 0,
     /* base_poiner  */ 0,
   };
+
+  // debuggerにenvを渡す
+
   uint8_t jit_flag = 0;
   std::string jit_str = std::string();
   auto hot_spots = std::unordered_map<size_t, uint32_t>();
@@ -212,6 +215,7 @@ uint8_t virtual_execute(uint32_t* vm, uint8_t* text, uint8_t* data, uint32_t ent
     CASE(BP) {
       pc++;
       printf("debug | code: %x op0: %x op1: %x op2: %x\n", i.code, i.op0, i.op1, i.op2);
+      bp(&e);
     } JUMP;
     CASE(STORE) {
       e.stack[e.base_pointer + i.op0] = e.registers[i.op1];
