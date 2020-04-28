@@ -24,13 +24,16 @@ extern "C" {
   typedef void(*procedure)(env*);
   env* env_new(uint8_t*, uint8_t*, uint32_t);
 }
+// create new vector and fill it with 0
 std::vector<uint32_t> vec_new();
+// count how many times vm calls the virtual function and check if it is hot
 uint8_t is_hot(std::unordered_map<size_t, uint32_t>&, size_t);
+// just-in-time assemble (dll/so) and load
 void jit_asm(std::unordered_map<size_t, procedure>&, size_t, const char*);
 void native_execute(std::unordered_map<size_t, procedure>&, size_t, env*);
-void bp(env*);
 void debugger(env*, uint32_t, uint32_t, uint32_t);
 
-extern uint8_t bp_flag;
+extern uint8_t debug_flag;
+extern uint8_t alive_flag;
 
 #endif

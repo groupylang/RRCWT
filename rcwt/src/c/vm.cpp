@@ -1,16 +1,15 @@
 #include "vm.h"
 
 env* env_new(uint8_t* text, uint8_t* data, uint32_t numRegisters) {
-  env e = {
-    /* text         */ text,
-    /* data         */ data,
-    /* registers    */ (uint32_t*) calloc(numRegisters, 4),
-    /* stack        */ vec_new(),
-    /* heap         */ vec_new(),
-    /* stack_poiner */ 0,
-    /* base_poiner  */ 0,
-  };
-  return &e;
+  env* e = new env;
+  e->text          = text;
+  e->data          = data;
+  e->registers     = (uint32_t*) calloc(numRegisters, 4);
+  e->stack         = vec_new();
+  e->heap          = vec_new();
+  e->stack_pointer = 0;
+  e->base_pointer  = 0;
+  return e;
 }
 
 std::vector<uint32_t> vec_new() {
@@ -28,7 +27,6 @@ std::string format(const char fmt[], Args ... args) {
   return std::string(&buf[0], &buf[0] + len);
 }
 
-// count how many times vm calls the virtual function and check if it is hot
 uint8_t is_hot(std::unordered_map<size_t, uint32_t>& hot_spots, size_t pc) {
   if (hot_spots[pc] < 3) { hot_spots[pc]++; return 0; }
   else { return 1; }
@@ -58,12 +56,10 @@ void jit_asm(std::unordered_map<size_t, procedure>& procs, size_t id, const char
 }
 #endif
 
-// execute native function
 void native_execute(std::unordered_map<size_t, procedure>& procs, size_t id, env* e) {
   procs[id](e);
 }
 
-// execute virtual functions
 uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
   // initialize
   uint8_t jit_flag = 0;
@@ -216,8 +212,7 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
     CASE(BP) {
       pc++;
       printf("debug | code: %x op0: %x op1: %x op2: %x\n", i.code, i.op0, i.op1, i.op2);
-      bp(e);
-	  bp_flag = true;
+	  debug_flag = true;
     } JUMP;
     CASE(STORE) {
       e->stack[e ->base_pointer + i.op0] = e ->registers[i.op1];

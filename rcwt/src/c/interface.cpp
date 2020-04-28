@@ -1,5 +1,6 @@
-#include "vm.h" /* vm.hをヘッダファイルとしますよ */
+#include "vm.h"
 #include <thread>
+#include <chrono>
 
 void print_int(uint32_t i) {
   std::cout << i;
@@ -52,28 +53,29 @@ int main() {
     data += '\0';
   }
 
-  std::cout << std::endl
-            << std::endl
-            << "[*] RCWT started"
+  std::cout << "[*] VMEntry"
             << std::endl;
 
   auto e = env_new(
-    /* text          */ reinterpret_cast<uint8_t*>(&text[0]),
-    /* data          */ reinterpret_cast<uint8_t*>(const_cast<char*>(data.c_str())),
-    /* registers     */ numRegisters
+    /* text      */ reinterpret_cast<uint8_t*>(&text[0]),
+    /* data      */ reinterpret_cast<uint8_t*>(const_cast<char*>(data.c_str())),
+    /* registers */ numRegisters
   );
 
-  std::thread debug_thread(debugger, e, text.size(), data.size(), numRegisters);
+  std::thread debug_thread(debugger, e, text.size() * 4, data.size(), numRegisters);
+  auto start = std::chrono::system_clock::now();
 
   auto status = virtual_execute(
-    /* vm           */ nullptr,
-    /* e            */ e,
-    /* entry_point  */ 0
+    /* vm          */ nullptr,
+    /* e           */ e,
+    /* entry_point */ 0
   );
 
+  auto end = std::chrono::system_clock::now();
+  alive_flag = false;
   debug_thread.join();
 
-  std::cout << std::endl
-            << std::endl;
-  printf("[*] RCWT was runned successfully with status: %d\n", status);
+  std::cout << std::endl;
+  printf("[*] VMExitWithStatus: %d\n", status);
+  printf("[*] VMExecutionTime: %ld\n", std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count());
 }
