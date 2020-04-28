@@ -1,72 +1,44 @@
 #include "vm.h" /* vm.hをヘッダファイルとしますよ */
 
-uint32_t break_flag_;
-env* e;
+uint8_t bp_flag = false;
 
-void debugger(uint32_t text_size, uint32_t data_size, uint32_t numRegisters) {
-   ;
-  while(break_flag_){
-    printf("数字を入力してください\n");
-    printf("0...スレッドBにメッセージを送信します\n");
-    printf("1...プロセスを終了します\n");
-    scanf("%d", &input);
-    switch(input){
-      case 0:
-        msg_ = 1;
-        break;
-      case 1:
-        break_flag_ = 0;
-        show_memory(env* e);
-        break;
-      default :
-        printf("０か１を入力してください\n");
-        break;
-    }
+void show_memory(env* e, uint32_t text_size, uint32_t data_size, uint32_t numRegisters) {
+  uint8_t* a = e->text; /*命令列先頭アドレス*/
+  std::cout << "text" << *a << std::endl; /*アドレス中身の表示*/
+
+  for (size_t i = 0; i <= text_size; i++) { 
+    a++;
+    std::cout << *a << " ";
+    if (i % 4 == 3) std::cout << std::endl;
   }
-  printf("スレッドA終了\n");
+
+  uint8_t* b = e->data; /*データ列先頭アドレス*/
+  std::cout << "data" << *b << std::endl; /*アドレス中身の表示*/
+
+  for (size_t i = 0; i <= text_size; i++) { 
+    b++;
+    std::cout << *b << " ";
+    if (i % 4 == 3) std::cout << std::endl;
+  }
+
+  uint32_t* c = e->registers; /*レジスタ先頭アドレス*/
+  std::cout << "register" << *c << std::endl; /*アドレス中身の表示*/
+
+  for (size_t i = 0; i <= text_size; i++) { 
+    c++;
+    std::cout << *c << " ";
+    if (i % 4 == 3) std::cout << std::endl;
+  }
 }
 
-
-
-void show_memory(env* e) {
-  uint8_t* a = e -> text; /*命令列先頭アドレス*/
-  std::cout << "text" <<  *a << std::endl; /*アドレス中身の表示*/
-
-  for (size_t i = 0; i <= 1000; i++){ 
-                                      /*アドレス表示の繰り返し*/
-    for (size_t i = 0; i <= 4; i++) {
-      a ++;                             /*アドレス表示4回繰り返し*/
-      std::cout <<  *a << " " ;
-    }
-    std::cout << std::endl;
-  }
-
-  uint8_t* b = e -> data; /*データ列先頭アドレス*/
-  std::cout << "data" <<  *b << std::endl; /*アドレス中身の表示*/
-
-  for (size_t i = 0; i <= 1000; i++){ 
-                                      /*アドレス表示の繰り返し*/
-    for (size_t i = 0; i <= 4; i++) {
-      b ++;                             /*アドレス表示4回繰り返し*/
-      std::cout <<  *b << " " ;
-    }
-    std::cout << std::endl;
-  } 
-
-  uint32_t* c = e -> registers; /*レジスタ先頭アドレス*/
-  std::cout << "register" <<  *c << std::endl; /*アドレス中身の表示*/
-
-  for (size_t i = 0; i <= 1000; i++){ 
-                                      /*アドレス表示の繰り返し*/
-    for (size_t i = 0; i <= 4; i++) {
-      c ++;                             /*アドレス表示4回繰り返し*/
-      std::cout <<  *c << " " ;
-    }
-    std::cout << std::endl;
-  }
-  
+void debugger(env* e, uint32_t text_size, uint32_t data_size, uint32_t numRegisters) {
+//   while (true) {
+//     if (bp_flag) {
+//       show_memory(e, text_size, data_size, numRegisters);
+// 	  bp_flag = false;
+//     }
+//   }
 }
-
 
 void bp(env* e) {
   std::cout << "\x1b[33m" // change font yellow

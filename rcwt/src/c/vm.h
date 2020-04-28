@@ -22,12 +22,15 @@ extern "C" {
   void print_int(uint32_t);
   void print_str(char*);
   typedef void(*procedure)(env*);
+  env* env_new(uint8_t*, uint8_t*, uint32_t);
 }
-inline std::vector<uint32_t> vec_new();
-inline uint8_t is_hot(std::unordered_map<size_t, uint32_t>&, size_t);
-inline void jit_asm(std::unordered_map<size_t, procedure>&, size_t, const char*);
-inline void native_execute(std::unordered_map<size_t, procedure>&, size_t, env*);
+std::vector<uint32_t> vec_new();
+uint8_t is_hot(std::unordered_map<size_t, uint32_t>&, size_t);
+void jit_asm(std::unordered_map<size_t, procedure>&, size_t, const char*);
+void native_execute(std::unordered_map<size_t, procedure>&, size_t, env*);
 void bp(env*);
-void debugger(uint32_t, uint32_t, uint32_t);
+void debugger(env*, uint32_t, uint32_t, uint32_t);
+
+extern uint8_t bp_flag;
 
 #endif

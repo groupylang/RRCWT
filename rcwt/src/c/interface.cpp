@@ -57,15 +57,22 @@ int main() {
             << "[*] RCWT started"
             << std::endl;
 
-  std::thread(debugger, text.size(), data.size(), numRegisters);
+  auto e = env_new(
+    /* text          */ reinterpret_cast<uint8_t*>(&text[0]),
+    /* data          */ reinterpret_cast<uint8_t*>(const_cast<char*>(data.c_str())),
+    /* registers     */ numRegisters
+  );
+
+  std::thread debug_thread(debugger, e, text.size(), data.size(), numRegisters);
 
   auto status = virtual_execute(
     /* vm           */ nullptr,
-    /* text         */ reinterpret_cast<uint8_t*>(&text[0]),
-    /* data         */ reinterpret_cast<uint8_t*>(const_cast<char*>(data.c_str())),
-    /* entry_point  */ 0,
-    /* numRegisters */ numRegisters
+    /* e            */ e,
+    /* entry_point  */ 0
   );
+
+  debug_thread.join();
+
   std::cout << std::endl
             << std::endl;
   printf("[*] RCWT was runned successfully with status: %d\n", status);
