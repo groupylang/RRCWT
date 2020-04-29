@@ -1,4 +1,5 @@
-use super::{Loc, Annot, Token};
+use super::{Loc, Annot};
+use super::token::Token;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum LexErrorKind {

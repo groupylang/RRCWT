@@ -1,5 +1,5 @@
 extern crate rlisp;
-use rlisp::Ast;
+use rlisp::ast::Ast;
 use rlisp::error::show_trace;
 use rlisp::interpreter::Interpreter;
 use rlisp::compiler::IrCompiler;

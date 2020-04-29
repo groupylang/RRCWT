@@ -1,4 +1,6 @@
-use super::{Loc, Token, Ast};
+use super::token::Token;
+use super::ast::Ast;
+use super::Loc;
 use super::lexer::{LexError, lex};
 use super::parser::{ParseError, parse};
 use std::str::FromStr;

@@ -1,4 +1,5 @@
-use super::{TokenKind, Token, UniOp, BinOp, AstKind, Ast};
+use super::token::{TokenKind, Token};
+use super::ast::{AstKind, Ast, UniOp, BinOp};
 use std::iter::Peekable;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -37,8 +38,7 @@ where
   Ok(e)
 }
 
-// atom
-fn parse_atom<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
+fn factor<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
 where
   Tokens: Iterator<Item = Token>,
 {
@@ -46,9 +46,9 @@ where
     .next()
     .ok_or(ParseError::Eof)
     .and_then(|tok| match tok.value {
-      // UNUMBER
+      // NUMBER
       TokenKind::Number(n) => Ok(Ast::new(AstKind::Num(n), tok.loc)),
-      // | "(", EXPR, ")" ;
+      // | "(" EXPR ")"
       TokenKind::LParen => {
         let e = parse_expr(tokens)?;
         match tokens.next() {
@@ -64,8 +64,7 @@ where
     })
 }
 
-// expr1
-fn parse_expr1<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
+fn uniop<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
 where
   Tokens: Iterator<Item = Token>,
 {
@@ -83,24 +82,25 @@ where
         }) => UniOp::minus(loc),
         _ => unreachable!(),
       };
-      // , ATOM
-      let e = parse_atom(tokens)?;
+      // factor
+      let e = factor(tokens)?;
       let loc = op.loc.merge(&e.loc);
       Ok(Ast::uniop(op, e, loc))
     }
-    //  | ATOM
-    _ => parse_atom(tokens),
+    // | factor
+    _ => factor(tokens),
   }
 }
 
-fn parse_expr2<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
+fn arith_term<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
 where
   Tokens: Iterator<Item = Token>,
 {
-  fn parse_expr2_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<BinOp, ParseError>
+  fn arith_term_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<BinOp, ParseError>
   where
     Tokens: Iterator<Item = Token>,
   {
+    // ("*" | "/")
     let op = tokens
       .peek()
       .ok_or(ParseError::Eof)
@@ -113,17 +113,18 @@ where
     Ok(op)
   }
 
-  parse_left_binop(tokens, parse_expr1, parse_expr2_op)
+  parse_left_binop(tokens, uniop, arith_term_op)
 }
 
-fn parse_expr3<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
+fn arith_expr<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
 where
   Tokens: Iterator<Item = Token>,
 {
-  fn parse_expr3_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<BinOp, ParseError>
+  fn arith_expr_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<BinOp, ParseError>
   where
     Tokens: Iterator<Item = Token>,
   {
+    // ("+" | "-")
     let op = tokens
       .peek()
       .ok_or(ParseError::Eof)
@@ -136,17 +137,18 @@ where
     Ok(op)
   }
 
-  parse_left_binop(tokens, parse_expr2, parse_expr3_op)
+  parse_left_binop(tokens, arith_term, arith_expr_op)
 }
 
-fn parse_expr4<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
+fn logic_term<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
 where
   Tokens: Iterator<Item = Token>,
 {
-  fn parse_expr4_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<BinOp, ParseError>
+  fn logic_term_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<BinOp, ParseError>
   where
     Tokens: Iterator<Item = Token>,
   {
+    // ("<" | "=" | ">")
     let op = tokens
       .peek()
       .ok_or(ParseError::Eof)
@@ -160,16 +162,17 @@ where
     Ok(op)
   }
 
-  parse_left_binop(tokens, parse_expr3, parse_expr4_op)
+  parse_left_binop(tokens, arith_expr, logic_term_op)
 }
-fn parse_expr5<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
+fn logic_expr<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
 where
   Tokens: Iterator<Item = Token>,
 {
-  fn parse_expr5_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<BinOp, ParseError>
+  fn logic_expr_op<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<BinOp, ParseError>
   where
     Tokens: Iterator<Item = Token>,
   {
+    // ("&" | "|")
     let op = tokens
       .peek()
       .ok_or(ParseError::Eof)
@@ -182,21 +185,21 @@ where
     Ok(op)
   }
 
-  parse_left_binop(tokens, parse_expr4, parse_expr5_op)
+  parse_left_binop(tokens, logic_term, logic_expr_op)
 }
 
 fn parse_expr<Tokens>(tokens: &mut Peekable<Tokens>) -> Result<Ast, ParseError>
 where
   Tokens: Iterator<Item = Token>,
 {
-  parse_expr5(tokens)
+  logic_expr(tokens)
 }
 
 pub fn parse(tokens: Vec<Token>) -> Result<Ast, ParseError> {
   let mut tokens = tokens.into_iter().peekable();
-  let ret = parse_expr(&mut tokens)?;
+  let expr = parse_expr(&mut tokens)?;
   match tokens.next() {
     Some(tok) => Err(ParseError::RedundantExpression(tok)),
-    None => Ok(ret),
+    None => Ok(expr),
   }
 }
