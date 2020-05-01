@@ -392,10 +392,9 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
     }
 
     CASE(NEW) {
-      e->heap.push_back(i.op2);
-      auto tmp = &e->heap.back();
+      auto tmp = e->heap.size();
       for (uint8_t u = 0; u < i.op2; u++) e->heap.push_back(0);
-      e->registers[i.op0] = *++tmp;
+      e->registers[i.op0] = tmp;
     } NEXT;
     CASE(SET) {
       e->heap[e->registers[i.op0] + i.op1] = e->registers[i.op2];
