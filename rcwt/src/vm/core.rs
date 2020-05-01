@@ -19,7 +19,9 @@ impl VirtualMachine {
   pub fn execute(&mut self) {
     #[link(name="core")]
     extern "C" {
+      /// @C env* env_new(uint8_t*, uint8_t*, uint32_t);
       fn env_new(text: *const u8, data: *const u8, numRegisters: u32) -> *const env;
+      /// @C uint8_t virtual_execute(uint32_t*, env*, uint32_t);
       fn virtual_execute(vm: *const u32, e: *const env, entry_point: u32) -> u8;
     }
     let status = unsafe {

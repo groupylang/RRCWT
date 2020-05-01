@@ -6,7 +6,7 @@ void print_int(uint32_t i) {
   std::cout << i;
   std::cout.flush();
 }
-void print_str(char* s) {
+void print_str(const char* s) {
   std::cout << s;
   std::cout.flush();
 }
@@ -62,7 +62,7 @@ int main() {
     /* registers */ numRegisters
   );
 
-  std::thread debug_thread(debugger, e, text.size() * 4, data.size(), numRegisters);
+  std::thread debug_thread(debugger, *e, text.size() * 4, data.size(), numRegisters);
   auto start = std::chrono::system_clock::now();
 
   auto status = virtual_execute(

@@ -3,8 +3,8 @@ pub mod core;
 
 use std::collections::HashMap;
 
-#[repr(C)]
-pub struct env;
+#[allow(non_camel_case_types)]
+pub enum env {}
 
 type Procedure = extern fn(*const env) -> ();
 

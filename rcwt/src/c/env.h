@@ -9,7 +9,7 @@
 
 typedef struct {
   uint8_t* text;
-  uint8_t* data;
+  const uint8_t* data;
   uint32_t* registers;
   std::vector<uint32_t> stack;
   std::vector<uint32_t> heap;
