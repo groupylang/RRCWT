@@ -32,6 +32,10 @@ impl VirtualMachine {
     println!("log | VMExitWithStatus: {}", status);
   }
   #[no_mangle]
+  pub fn print_float(arg: f32) {
+    print!("{}", arg);
+  }
+  #[no_mangle]
   pub fn print_int(arg: u32) {
     print!("{}", arg);
   }

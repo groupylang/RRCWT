@@ -24,7 +24,6 @@ fn main() -> io::Result<()> {
   fs::create_dir_all("tmp")?;
   let reader = BufReader::new(File::open("direct.yml")?);
   let direct: Direct = serde_yaml::from_reader(reader).expect("error | InvalidYamlFile");
-  println!("{:?}", direct);
 
   extern "C" {
     // env* env_new(uint8_t*, uint8_t*, uint32_t);

@@ -466,38 +466,38 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
 
     CASE(FADD) {
       *reinterpret_cast<float*>(e->registers + i.op0)
-        = *reinterpret_cast<float*>(e->registers + i.op0)
-        + *reinterpret_cast<float*>(e->registers + i.op1);
+        = *reinterpret_cast<float*>(e->registers + i.op1)
+        + *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FSUB) {
       *reinterpret_cast<float*>(e->registers + i.op0)
-        = *reinterpret_cast<float*>(e->registers + i.op0)
-        - *reinterpret_cast<float*>(e->registers + i.op1);
+        = *reinterpret_cast<float*>(e->registers + i.op1)
+        - *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FMUL) {
       *reinterpret_cast<float*>(e->registers + i.op0)
-        = *reinterpret_cast<float*>(e->registers + i.op0)
-        * *reinterpret_cast<float*>(e->registers + i.op1);
+        = *reinterpret_cast<float*>(e->registers + i.op1)
+        * *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FDIV) {
       *reinterpret_cast<float*>(e->registers + i.op0)
-        = *reinterpret_cast<float*>(e->registers + i.op0)
-        / *reinterpret_cast<float*>(e->registers + i.op1);
+        = *reinterpret_cast<float*>(e->registers + i.op1)
+        / *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FGT) {
       *reinterpret_cast<float*>(e->registers + i.op0)
-        = *reinterpret_cast<float*>(e->registers + i.op0)
-        > *reinterpret_cast<float*>(e->registers + i.op1);
+        = *reinterpret_cast<float*>(e->registers + i.op1)
+        > *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FGE) {
       *reinterpret_cast<float*>(e->registers + i.op0)
-        = *reinterpret_cast<float*>(e->registers + i.op0)
-        >= *reinterpret_cast<float*>(e->registers + i.op1);
+        = *reinterpret_cast<float*>(e->registers + i.op1)
+        >= *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FEQ) {
       *reinterpret_cast<float*>(e->registers + i.op0)
-        = *reinterpret_cast<float*>(e->registers + i.op0)
-        == *reinterpret_cast<float*>(e->registers + i.op1);
+        = *reinterpret_cast<float*>(e->registers + i.op1)
+        == *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
 
     // macros TODO be replaced with rcwtlib
