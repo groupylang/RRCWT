@@ -1,7 +1,9 @@
-#include "vm.h"
 #include <chrono>
 #include <fstream>
+#include <iostream>
 #include <iomanip>
+
+#include "vm.h"
 
 uint8_t debug_flag = false;
 uint8_t alive_flag = true;
@@ -36,7 +38,7 @@ void debugger(env&& e, uint32_t text_size, uint32_t data_size, uint32_t numRegis
   while (alive_flag) {
     if (debug_flag) {
       SYNC([] { debug_flag = false; })
-      std::ofstream fout(format("debug_%s.txt", strNow()));
+      std::ofstream fout(format("tmp/dump_%s.txt", strNow()));
 
       fout << "text: "      << std::endl; show_array8(fout, e.text, text_size);
       fout << "data: "      << std::endl; show_array8(fout, e.data, data_size);

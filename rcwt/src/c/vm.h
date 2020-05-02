@@ -4,13 +4,11 @@
 
 #include "env.h"
 
-#include <utility>
-#include <algorithm>
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <unordered_map>
 #include <mutex>
+#include <thread>
+#include <unordered_map>
+
+#include "env.h"
 
 #define SYNC(lambda) std::mutex mtx; { std::lock_guard<std::mutex> lock(mtx); lambda(); }
 
@@ -24,6 +22,8 @@ typedef struct {
 extern "C" {
   void print_int(uint32_t);
   void print_str(const char*);
+  void print_float(float);
+  uint8_t virtual_execute_wrapper(env*, uint32_t, uint32_t, uint32_t, uint32_t);
   typedef void(*procedure)(env*);
   env* env_new(uint8_t*, uint8_t*, uint32_t);
 }

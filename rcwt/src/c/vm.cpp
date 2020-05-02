@@ -1,4 +1,28 @@
+#include <utility>
+#include <algorithm>
+#include <string>
+#include <iostream>
+#include <fstream>
+
 #include "vm.h"
+
+uint8_t virtual_execute_wrapper(
+  env* e,
+  uint32_t text_size,
+  uint32_t data_size,
+  uint32_t numRegisters,
+  uint32_t entry_point
+) {
+  std::thread th(debugger, *e, text_size, data_size, numRegisters);
+  auto status = virtual_execute(
+    /* vm          */ nullptr,
+    /* e           */ e,
+    /* entry point */ entry_point
+  );
+  SYNC([] { alive_flag = false; })
+  th.join();
+  return status;
+}
 
 env* env_new(uint8_t* text, uint8_t* data, uint32_t numRegisters) {
   env* e = new env;
@@ -87,14 +111,14 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
       /* 0c */ &&L_NOP,   /* 0d */ &&L_NOP,   /* 0e */ &&L_NOP,   /* 0f */ &&L_NOP,
 
       /* 10 */ &&L_ADDR,  /* 11 */ &&L_SUBR,  /* 12 */ &&L_MULR,  /* 13 */ &&L_DIVR,
-      /* 14 */ &&L_GT,    /* 15 */ &&L_GE,    /* 16 */ &&L_EQ,    /* 17 */ &&L_NOP,
-      /* 18 */ &&L_AND,   /* 19 */ &&L_OR,    /* 1a */ &&L_NOT,   /* 1b */ &&L_NOP,
+      /* 14 */ &&L_REMR,  /* 15 */ &&L_GT,    /* 16 */ &&L_GE,    /* 17 */ &&L_EQ,
+      /* 18 */ &&L_AND,   /* 19 */ &&L_OR,    /* 1a */ &&L_NOT,   /* 1b */ &&L_XOR,
       /* 1c */ &&L_SHL,   /* 1d */ &&L_SHR,   /* 1e */ &&L_NOP,   /* 1f */ &&L_NOP,
 
       /* 20 */ &&L_ADDI,  /* 21 */ &&L_SUBI,  /* 22 */ &&L_MULI,  /* 23 */ &&L_DIVI,
-      /* 24 */ &&L_NOP,   /* 25 */ &&L_NOP,   /* 26 */ &&L_NOP,   /* 27 */ &&L_NOP,
+      /* 24 */ &&L_REMI,  /* 25 */ &&L_NOP,   /* 26 */ &&L_NOP,   /* 27 */ &&L_NOP,
       /* 28 */ &&L_NOP,   /* 29 */ &&L_NOP,   /* 2a */ &&L_NOP,   /* 2b */ &&L_NOP,
-      /* 2c */ &&L_NOP,   /* 2d */ &&L_NOP,   /* 2e */ &&L_NOP,   /* 2f */ &&L_NOP,
+      /* 2c */ &&L_SHLI,  /* 2d */ &&L_SHRI,  /* 2e */ &&L_NOP,   /* 2f */ &&L_NOP,
 
       /* 30 */ &&L_ADDA,  /* 31 */ &&L_SUBA,  /* 32 */ &&L_NOP,   /* 33 */ &&L_NOP,
       /* 34 */ &&L_NOP,   /* 35 */ &&L_NOP,   /* 36 */ &&L_NOP,   /* 37 */ &&L_NOP,
@@ -111,8 +135,8 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
       /* 58 */ &&L_NOP,   /* 59 */ &&L_NOP,   /* 5a */ &&L_NOP,   /* 5b */ &&L_NOP,
       /* 5c */ &&L_NOP,   /* 5d */ &&L_NOP,   /* 5e */ &&L_NOP,   /* 5f */ &&L_NOP,
 
-      /* 60 */ &&L_NOP,   /* 61 */ &&L_NOP,   /* 62 */ &&L_NOP,   /* 63 */ &&L_NOP,
-      /* 64 */ &&L_NOP,   /* 65 */ &&L_NOP,   /* 66 */ &&L_NOP,   /* 67 */ &&L_NOP,
+      /* 60 */ &&L_FADD,  /* 61 */ &&L_FSUB,  /* 62 */ &&L_FMUL,  /* 63 */ &&L_FDIV,
+      /* 64 */ &&L_NOP,   /* 65 */ &&L_FGT,   /* 66 */ &&L_FGE,   /* 67 */ &&L_FEQ,
       /* 68 */ &&L_NOP,   /* 69 */ &&L_NOP,   /* 6a */ &&L_NOP,   /* 6b */ &&L_NOP,
       /* 6c */ &&L_NOP,   /* 6d */ &&L_NOP,   /* 6e */ &&L_NOP,   /* 6f */ &&L_NOP,
 
@@ -158,8 +182,8 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
 
       /* f0 */ &&L_NOP,   /* f1 */ &&L_NOP,   /* f2 */ &&L_NOP,   /* f3 */ &&L_NOP,
       /* f4 */ &&L_NOP,   /* f5 */ &&L_NOP,   /* f6 */ &&L_NOP,   /* f7 */ &&L_NOP,
-      /* f8 */ &&L_NOP,   /* f9 */ &&L_NOP,   /* fa */ &&L_MOV,   /* fb */ &&L_XOR,
-      /* fc */ &&L_REMR,  /* fd */ &&L_REMI,  /* fe */ &&L_IOUT,  /* ff */ &&L_SOUT,
+      /* f8 */ &&L_NOP,   /* f9 */ &&L_NOP,   /* fa */ &&L_MOV,   /* fb */ &&L_NOP,
+      /* fc */ &&L_NOP,   /* fd */ &&L_FOUT,  /* fe */ &&L_IOUT,  /* ff */ &&L_SOUT,
   };
 #else
   #define NOP   0x00
@@ -172,18 +196,23 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
   #define SUBR  0x11
   #define MULR  0x12
   #define DIVR  0x13
-  #define GT    0x14
-  #define GE    0x15
-  #define EQ    0x16
+  #define REMR  0x14
+  #define GT    0x15
+  #define GE    0x16
+  #define EQ    0x17
   #define AND   0x18
   #define OR    0x19
   #define NOT   0x1a
+  #define XOR   0x1b
   #define SHL   0x1c
   #define SHR   0x1d
   #define ADDI  0x20
   #define SUBI  0x21
   #define MULI  0x22
   #define DIVI  0x23
+  #define REMI  0x24
+  #define SHLI  0x2c
+  #define SHRI  0x2d
   #define GOTO  0x40
   #define EXIT  0x41
   #define CALL  0x42
@@ -194,10 +223,15 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
   #define NEW   0x50
   #define SET   0x51
   #define GET   0x52
+  #define FADD  0x60
+  #define FSUB  0x61
+  #define FMUL  0x62
+  #define FDIV  0x63
+  #define FGT   0x65
+  #define FGE   0x66
+  #define FEQ   0x67
   #define MOV   0xfa
-  #define XOR   0xfb
-  #define REMR  0xfc
-  #define REMI  0xfd
+  #define FOUT  0xfd
   #define IOUT  0xfe
   #define SOUT  0xff
 #endif
@@ -254,6 +288,12 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
         jit_str += format("\te->registers[%d] = e->registers[%d] / e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
+    CASE(REMR) {
+      e->registers[i.op0] = e->registers[i.op1] % e->registers[i.op2];
+      if (jit_flag) {
+        jit_str += format("\te->registers[%d] = e->registers[%d] % e->registers[%d];\n", i.op0, i.op1, i.op2);
+      }
+    } NEXT;
     CASE(GT) {
       e->registers[i.op0] = e->registers[i.op1] > e->registers[i.op2];
       if (jit_flag) {
@@ -290,16 +330,22 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
         jit_str += format("\te->registers[%d] = !e->registers[%d];\n", i.op0, i.op1);
       }
     } NEXT;
-    CASE(SHL) {
-      e->registers[i.op0] = e->registers[i.op1] >> e->registers[i.op2];
+    CASE(XOR) {
+      e->registers[i.op0] = e->registers[i.op1] ^ e->registers[i.op2];
       if (jit_flag) {
-        jit_str += format("\te->registers[%d] = e->registers[%d] >> e->registers[%d];\n", i.op0, i.op1, i.op2);
+        jit_str += format("\te->registers[%d] = e->registers[%d] ^ e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
-    CASE(SHR) {
+    CASE(SHL) {
       e->registers[i.op0] = e->registers[i.op1] << e->registers[i.op2];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] << e->registers[%d];\n", i.op0, i.op1, i.op2);
+      }
+    } NEXT;
+    CASE(SHR) {
+      e->registers[i.op0] = e->registers[i.op1] >> e->registers[i.op2];
+      if (jit_flag) {
+        jit_str += format("\te->registers[%d] = e->registers[%d] >> e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
 
@@ -325,6 +371,24 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
       e->registers[i.op0] = e->registers[i.op1] / i.op2;
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] / %d;\n", i.op0, i.op1, i.op2);
+      }
+    } NEXT;
+    CASE(REMI) {
+      e->registers[i.op0] = e->registers[i.op1] % i.op2;
+      if (jit_flag) {
+        jit_str += format("\te->registers[%d] = e->registers[%d] % %d;\n", i.op0, i.op1, i.op2);
+      }
+    } NEXT;
+    CASE(SHLI) {
+      e->registers[i.op0] = e->registers[i.op1] << i.op2;
+      if (jit_flag) {
+        jit_str += format("\te->registers[%d] = e->registers[%d] >> %d;\n", i.op0, i.op1, i.op2);
+      }
+    } NEXT;
+    CASE(SHRI) {
+      e->registers[i.op0] = e->registers[i.op1] >> i.op2;
+      if (jit_flag) {
+        jit_str += format("\te->registers[%d] = e->registers[%d] << %d;\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
 
@@ -400,18 +464,48 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
       e->registers[i.op2] = e->heap[e->registers[i.op0] + i.op1];
     } NEXT;
 
+    CASE(FADD) {
+      *reinterpret_cast<float*>(e->registers + i.op0)
+        = *reinterpret_cast<float*>(e->registers + i.op0)
+        + *reinterpret_cast<float*>(e->registers + i.op1);
+    } NEXT;
+    CASE(FSUB) {
+      *reinterpret_cast<float*>(e->registers + i.op0)
+        = *reinterpret_cast<float*>(e->registers + i.op0)
+        - *reinterpret_cast<float*>(e->registers + i.op1);
+    } NEXT;
+    CASE(FMUL) {
+      *reinterpret_cast<float*>(e->registers + i.op0)
+        = *reinterpret_cast<float*>(e->registers + i.op0)
+        * *reinterpret_cast<float*>(e->registers + i.op1);
+    } NEXT;
+    CASE(FDIV) {
+      *reinterpret_cast<float*>(e->registers + i.op0)
+        = *reinterpret_cast<float*>(e->registers + i.op0)
+        / *reinterpret_cast<float*>(e->registers + i.op1);
+    } NEXT;
+    CASE(FGT) {
+      *reinterpret_cast<float*>(e->registers + i.op0)
+        = *reinterpret_cast<float*>(e->registers + i.op0)
+        > *reinterpret_cast<float*>(e->registers + i.op1);
+    } NEXT;
+    CASE(FGE) {
+      *reinterpret_cast<float*>(e->registers + i.op0)
+        = *reinterpret_cast<float*>(e->registers + i.op0)
+        >= *reinterpret_cast<float*>(e->registers + i.op1);
+    } NEXT;
+    CASE(FEQ) {
+      *reinterpret_cast<float*>(e->registers + i.op0)
+        = *reinterpret_cast<float*>(e->registers + i.op0)
+        == *reinterpret_cast<float*>(e->registers + i.op1);
+    } NEXT;
+
     // macros TODO be replaced with rcwtlib
     CASE(MOV) {
       e->registers[i.op0] = (i.op1 << 8) + i.op2;
     } NEXT;
-    CASE(XOR) {
-      e->registers[i.op0] = e->registers[i.op1] ^ e->registers[i.op2];
-    } NEXT;
-    CASE(REMR) {
-      e->registers[i.op0] = e->registers[i.op1] % e->registers[i.op2];
-    } NEXT;
-    CASE(REMI) {
-      e->registers[i.op0] = e->registers[i.op1] % i.op2;
+    CASE(FOUT) {
+      print_float(*reinterpret_cast<float*>(e->registers + i.op0));
     } NEXT;
     CASE(IOUT) {
       print_int(e->registers[i.op0]);
