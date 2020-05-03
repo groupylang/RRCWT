@@ -31,7 +31,7 @@ void native_load(std::unordered_map<size_t, procedure>& procs, size_t id, std::s
   auto handle = LoadLibraryA(path.c_str());
   auto f = reinterpret_cast<procedure>(GetProcAddress(handle, "f"));
 #elif defined(__linux)
-  auto handle = dlopen(path.c_str()), RTLD_LAZY);
+  auto handle = dlopen(path.c_str(), RTLD_LAZY);
   auto f = reinterpret_cast<procedure>(dlsym(handle, "f"));
 #endif
   procs[id] = f;
