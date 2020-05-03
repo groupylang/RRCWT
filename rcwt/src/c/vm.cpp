@@ -148,7 +148,7 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
       /* f0 */ &&L_NOP,   /* f1 */ &&L_NOP,   /* f2 */ &&L_NOP,   /* f3 */ &&L_NOP,
       /* f4 */ &&L_NOP,   /* f5 */ &&L_NOP,   /* f6 */ &&L_NOP,   /* f7 */ &&L_NOP,
       /* f8 */ &&L_NOP,   /* f9 */ &&L_NOP,   /* fa */ &&L_MOV,   /* fb */ &&L_GOTOL,
-      /* fc */ &&L_NOP,   /* fd */ &&L_FOUT,  /* fe */ &&L_IOUT,  /* ff */ &&L_SOUT,
+      /* fc */ &&L_NCALL, /* fd */ &&L_FOUT,  /* fe */ &&L_IOUT,  /* ff */ &&L_SOUT,
   };
 #else
   #define NOP   0x00
@@ -197,6 +197,7 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
   #define FEQ   0x67
   #define MOV   0xfa
   #define GOTOL 0xfb
+  #define NCALL 0xfc
   #define FOUT  0xfd
   #define IOUT  0xfe
   #define SOUT  0xff
@@ -471,6 +472,9 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
     CASE(GOTOL) {
       pc += (i.op0 << 16) + (i.op1 << 8) + i.op2;
     } JUMP;
+    CASE(NCALL) {
+      native_execute(procs, reinterpret_cast<size_t>(pc), e);
+    } NEXT;
     CASE(FOUT) {
       print_float(*reinterpret_cast<float*>(e->registers + i.op0));
     } NEXT;
@@ -486,22 +490,25 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
   } END_DISPATCH;
 
   } catch (std::invalid_argument&) {
-    std::cout << "error | InvalidArgument" << std::endl;
+    std::cerr << "error | InvalidArgument" << std::endl;
     return 1;
   } catch (std::length_error&) {
-    std::cout << "error | VectorOutOfBounds" << std::endl;
+    std::cerr << "error | VectorOutOfBounds" << std::endl;
     return 1;
   } catch (std::out_of_range&) {
-    std::cout << "error | ObjectTooLong" << std::endl;
+    std::cerr << "error | ObjectTooLong" << std::endl;
     return 1;
   } catch (std::bad_alloc&) {
-    std::cout << "error | BadAlloc" << std::endl;
+    std::cerr << "error | BadAlloc" << std::endl;
     return 1;
   } catch (std::overflow_error&) {
-    std::cout << "error | OverFlow" << std::endl;
+    std::cerr << "error | OverFlow" << std::endl;
     return 1;
   } catch (std::underflow_error&) {
-    std::cout << "error | UnderFlow" << std::endl;
+    std::cerr << "error | UnderFlow" << std::endl;
+    return 1;
+  } catch (std::exception& e) {
+    std::cerr << "error | " << e.what() << std::endl;
     return 1;
   }
 

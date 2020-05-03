@@ -31,6 +31,7 @@ inline std::vector<uint32_t> vec_new();
 inline uint8_t is_hot(std::unordered_map<size_t, uint32_t>&, size_t);
 // just-in-time assemble (dll/so) and load
 inline void jit_asm(std::unordered_map<size_t, procedure>&, size_t, const char*);
+inline void native_load(std::unordered_map<size_t, procedure>&, size_t, std::string);
 inline void native_execute(std::unordered_map<size_t, procedure>&, size_t, env*);
 template <typename ... Args>
 inline std::string format(const char fmt[], Args ... args) {
