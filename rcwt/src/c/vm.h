@@ -28,11 +28,11 @@ extern "C" {
 // create new vector and fill it with 0
 inline std::vector<uint32_t> vec_new();
 // count how many times vm calls the virtual function and check if it is hot
-inline uint8_t is_hot(std::unordered_map<size_t, uint32_t>&, size_t);
+uint8_t is_hot(std::unordered_map<size_t, uint32_t>&, size_t);
 // just-in-time assemble (dll/so) and load
-inline void jit_asm(std::unordered_map<size_t, procedure>&, size_t, const char*);
-inline void native_load(std::unordered_map<size_t, procedure>&, size_t, std::string);
-inline void native_execute(std::unordered_map<size_t, procedure>&, size_t, env*);
+void jit_asm(std::unordered_map<size_t, procedure>&, size_t, const char*);
+void native_load(std::unordered_map<size_t, procedure>&, size_t, std::string);
+void native_execute(std::unordered_map<size_t, procedure>&, size_t, env*);
 template <typename ... Args>
 inline std::string format(const char fmt[], Args ... args) {
   size_t len = std::snprintf(nullptr, 0, fmt, args ...);
