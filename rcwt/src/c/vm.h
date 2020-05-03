@@ -2,8 +2,6 @@
 #ifndef RCWT_VM_H
 #define RCWT_VM_H
 
-#include "env.h"
-
 #include <mutex>
 #include <thread>
 #include <unordered_map>

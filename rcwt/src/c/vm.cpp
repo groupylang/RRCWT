@@ -1,8 +1,6 @@
-#include <utility>
 #include <algorithm>
 #include <string>
 #include <iostream>
-#include <fstream>
 
 #include "vm.h"
 
@@ -41,39 +39,6 @@ std::vector<uint32_t> vec_new() {
   tmp.reserve(32);
   std::fill(tmp.begin(), tmp.end(), 0);
   return tmp;
-}
-
-uint8_t is_hot(std::unordered_map<size_t, uint32_t>& hot_spots, size_t pc) {
-  if (hot_spots[pc] < 3) { hot_spots[pc]++; return 0; }
-  else { return 1; }
-}
-
-#if defined(_WIN32) || defined(_WIN64)
-#include <windows.h>
-void jit_asm(std::unordered_map<size_t, procedure>& procs, size_t id, const char* jit_str) {
-  std::ofstream fout(format("tmp/jit%zu.cpp", id).c_str());
-  fout << jit_str;
-  fout.flush();
-  system(format("clang++ tmp/jit%zu.cpp -o tmp/jit%zu.so -Wall -Wextra -g -shared -fPIC", id, id).c_str());
-  auto handle = LoadLibraryA(format("tmp/jit%zu.so", id).c_str());
-  auto f = reinterpret_cast<procedure>(GetProcAddress(handle, "f"));
-  procs[id] = f;
-}
-#elif defined(__linux)
-#include <dlfcn.h>
-void jit_asm(std::unordered_map<size_t, procedure>& procs, size_t id, const char* jit_str) {
-  std::ofstream fout(format("tmp/jit%zu.cpp", id).c_str());
-  fout << jit_str;
-  fout.flush();
-  system(format("clang++ tmp/jit%zu.cpp -o tmp/jit%zu.so -Wall -Wextra -g -shared -fPIC", id, id).c_str());
-  auto handle = dlopen(format("tmp/jit%zu.so", id).c_str(), RTLD_LAZY);
-  auto f = reinterpret_cast<procedure>(dlsym(handle, "f"));
-  procs[id] = f;
-}
-#endif
-
-void native_execute(std::unordered_map<size_t, procedure>& procs, size_t id, env* e) {
-  procs[id](e);
 }
 
 uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
@@ -182,7 +147,7 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
 
       /* f0 */ &&L_NOP,   /* f1 */ &&L_NOP,   /* f2 */ &&L_NOP,   /* f3 */ &&L_NOP,
       /* f4 */ &&L_NOP,   /* f5 */ &&L_NOP,   /* f6 */ &&L_NOP,   /* f7 */ &&L_NOP,
-      /* f8 */ &&L_NOP,   /* f9 */ &&L_NOP,   /* fa */ &&L_MOV,   /* fb */ &&L_NOP,
+      /* f8 */ &&L_NOP,   /* f9 */ &&L_NOP,   /* fa */ &&L_MOV,   /* fb */ &&L_GOTOL,
       /* fc */ &&L_NOP,   /* fd */ &&L_FOUT,  /* fe */ &&L_IOUT,  /* ff */ &&L_SOUT,
   };
 #else
@@ -231,6 +196,7 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
   #define FGE   0x66
   #define FEQ   0x67
   #define MOV   0xfa
+  #define GOTOL 0xfb
   #define FOUT  0xfd
   #define IOUT  0xfe
   #define SOUT  0xff
@@ -245,6 +211,7 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
       std::string input;
       std::cin >> input;
     } NEXT;
+
     CASE(STORE) {
       e->stack[e->base_pointer + i.op0] = e->registers[i.op1];
       if (jit_flag) {
@@ -441,21 +408,18 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
     } JUMP;
     CASE(IFGT) {
       if (e->registers[i.op1] > e->registers[i.op2]) { pc += i.op0; JUMP; }
-      else{ NEXT; }
-    }
+    } NEXT;
     CASE(IFGE) {
       if (e->registers[i.op1] >= e->registers[i.op2]) { pc += i.op0; JUMP; }
-      else{ NEXT; }
-    }
+    } NEXT;
     CASE(IFEQ) {
       if (e->registers[i.op1] == e->registers[i.op2]) { pc += i.op0; JUMP; }
-      else{ NEXT; }
-    }
+    } NEXT;
 
     CASE(NEW) {
-      auto tmp = e->heap.size();
-      for (uint8_t u = 0; u < i.op2; u++) e->heap.push_back(0);
-      e->registers[i.op0] = tmp;
+      auto offset = e->heap.size();
+      for (uint8_t u = 0; u < i.op2; u++) e->heap.push_back(0); // e->heap.reserve(offset + i.op2);
+      e->registers[i.op0] = offset;
     } NEXT;
     CASE(SET) {
       e->heap[e->registers[i.op0] + i.op1] = e->registers[i.op2];
@@ -485,17 +449,17 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
         / *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FGT) {
-      *reinterpret_cast<float*>(e->registers + i.op0)
+      e->registers[i.op0]
         = *reinterpret_cast<float*>(e->registers + i.op1)
         > *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FGE) {
-      *reinterpret_cast<float*>(e->registers + i.op0)
+      e->registers[i.op0]
         = *reinterpret_cast<float*>(e->registers + i.op1)
         >= *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FEQ) {
-      *reinterpret_cast<float*>(e->registers + i.op0)
+      e->registers[i.op0]
         = *reinterpret_cast<float*>(e->registers + i.op1)
         == *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
@@ -504,6 +468,9 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
     CASE(MOV) {
       e->registers[i.op0] = (i.op1 << 8) + i.op2;
     } NEXT;
+    CASE(GOTOL) {
+      pc += (i.op0 << 16) + (i.op1 << 8) + i.op2;
+    } JUMP;
     CASE(FOUT) {
       print_float(*reinterpret_cast<float*>(e->registers + i.op0));
     } NEXT;
@@ -518,22 +485,22 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
     } NEXT;
   } END_DISPATCH;
 
-  } catch (std::invalid_argument) {
+  } catch (std::invalid_argument&) {
     std::cout << "error | InvalidArgument" << std::endl;
     return 1;
-  } catch (std::length_error) {
+  } catch (std::length_error&) {
     std::cout << "error | VectorOutOfBounds" << std::endl;
     return 1;
-  } catch (std::out_of_range) {
+  } catch (std::out_of_range&) {
     std::cout << "error | ObjectTooLong" << std::endl;
     return 1;
-  } catch (std::bad_alloc) {
+  } catch (std::bad_alloc&) {
     std::cout << "error | BadAlloc" << std::endl;
     return 1;
-  } catch (std::overflow_error) {
+  } catch (std::overflow_error&) {
     std::cout << "error | OverFlow" << std::endl;
     return 1;
-  } catch (std::underflow_error) {
+  } catch (std::underflow_error&) {
     std::cout << "error | UnderFlow" << std::endl;
     return 1;
   }

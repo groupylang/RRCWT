@@ -8,7 +8,8 @@ fn main() {
 	  .flag("-pthread")
   	.file("../rcwt/src/c/env.cpp")
     .file("../rcwt/src/c/vm.cpp")
-    .file("../rcwt/src/c/debug.cpp")
+		.file("../rcwt/src/c/debug.cpp")
+		.file("../rcwt/src/c/jit.cpp")
   	.include("../rcwt/src/c")
 	.compile("core")  
 }
@@ -19,7 +20,8 @@ fn main() {
   	.warnings(true)
   	.file("../rcwt/src/c/env.cpp")
     .file("../rcwt/src/c/vm.cpp")
-    .file("../rcwt/src/c/debug.cpp")
+		.file("../rcwt/src/c/debug.cpp")
+		.file("../rcwt/src/c/jit.cpp")
   	.include("../rcwt/src/c")
   	.compile("core")
 }

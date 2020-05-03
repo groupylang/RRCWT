@@ -8,7 +8,8 @@ fn main() {
 	  .flag("-pthread")
   	.file("src/c/env.cpp")
     .file("src/c/vm.cpp")
-    .file("src/c/debug.cpp")
+		.file("src/c/debug.cpp")
+		.file("src/c/jit.cpp")
   	.include("src/c")
 	.compile("core")  
 }
@@ -19,7 +20,8 @@ fn main() {
   	.warnings(true)
   	.file("src/c/env.cpp")
     .file("src/c/vm.cpp")
-    .file("src/c/debug.cpp")
+		.file("src/c/debug.cpp")
+		.file("src/c/jit.cpp")
   	.include("src/c")
   	.compile("core")
 }
