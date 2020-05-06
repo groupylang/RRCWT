@@ -5,43 +5,49 @@
 #include "vm.h"
 
 uint8_t virtual_execute_wrapper(
-  env* e,
   uint32_t text_size,
+  uint8_t* text,
   uint32_t data_size,
+  uint8_t* data,
   uint32_t numRegisters,
   uint32_t entry_point
 ) {
-  std::thread th(debugger, *e, text_size, data_size, numRegisters);
+  // allocate and initialize memory
+  auto e = env_new(text, data, numRegisters);
+  // start debug thread
+  std::thread th(debugger, e, text_size, data_size, numRegisters);
+  // execute virtual machine
   auto status = virtual_execute(
-    /* vm          */ nullptr,
     /* e           */ e,
     /* entry point */ entry_point
   );
+  // stop debug thread
   SYNC([] { alive_flag = false; })
   th.join();
   return status;
 }
 
-env* env_new(uint8_t* text, uint8_t* data, uint32_t numRegisters) {
-  env* e = new env;
-  e->text          = text;
-  e->data          = data;
-  e->registers     = (uint32_t*) calloc(numRegisters, 4);
-  e->stack         = vec_new();
-  e->heap          = vec_new();
-  e->stack_pointer = 0;
-  e->base_pointer  = 0;
-  return e;
-}
-
-std::vector<uint32_t> vec_new() {
+// create new vector and fill it with 0
+inline std::vector<uint32_t> vector_new() {
   auto tmp = std::vector<uint32_t>();
   tmp.reserve(32);
   std::fill(tmp.begin(), tmp.end(), 0);
   return tmp;
 }
 
-uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
+env* env_new(uint8_t* text, uint8_t* data, uint32_t numRegisters) {
+  auto e = new env;
+  e->text          = text;
+  e->data          = data;
+  e->registers     = reinterpret_cast<uint32_t*>(calloc(numRegisters, 4));
+  e->stack         = vector_new();
+  e->heap          = vector_new();
+  e->stack_pointer = 0;
+  e->base_pointer  = 0;
+  return e;
+}
+
+uint8_t virtual_execute(env* e, uint32_t entry_point) {
   // initialize
   uint8_t jit_flag = 0;
   std::string jit_str = std::string();
@@ -95,7 +101,7 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
       /* 48 */ &&L_NOP,   /* 49 */ &&L_NOP,   /* 4a */ &&L_NOP,   /* 4b */ &&L_NOP,  
       /* 4c */ &&L_NOP,   /* 4d */ &&L_NOP,   /* 4e */ &&L_NOP,   /* 4f */ &&L_NOP,
 
-      /* 50 */ &&L_NEW,   /* 51 */ &&L_SET,   /* 52 */ &&L_GET,   /* 53 */ &&L_NOP,
+      /* 50 */ &&L_NEW,   /* 51 */ &&L_SET,   /* 52 */ &&L_GET,   /* 53 */ &&L_COPY,
       /* 54 */ &&L_NOP,   /* 55 */ &&L_NOP,   /* 56 */ &&L_NOP,   /* 57 */ &&L_NOP,
       /* 58 */ &&L_NOP,   /* 59 */ &&L_NOP,   /* 5a */ &&L_NOP,   /* 5b */ &&L_NOP,
       /* 5c */ &&L_NOP,   /* 5d */ &&L_NOP,   /* 5e */ &&L_NOP,   /* 5f */ &&L_NOP,
@@ -147,7 +153,7 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
 
       /* f0 */ &&L_NOP,   /* f1 */ &&L_NOP,   /* f2 */ &&L_NOP,   /* f3 */ &&L_NOP,
       /* f4 */ &&L_NOP,   /* f5 */ &&L_NOP,   /* f6 */ &&L_NOP,   /* f7 */ &&L_NOP,
-      /* f8 */ &&L_NOP,   /* f9 */ &&L_NOP,   /* fa */ &&L_MOV,   /* fb */ &&L_GOTOL,
+      /* f8 */ &&L_NOP,   /* f9 */ &&L_NOP,   /* fa */ &&L_IMM,   /* fb */ &&L_GOTOL,
       /* fc */ &&L_NCALL, /* fd */ &&L_FOUT,  /* fe */ &&L_IOUT,  /* ff */ &&L_SOUT,
   };
 #else
@@ -188,6 +194,7 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
   #define NEW   0x50
   #define SET   0x51
   #define GET   0x52
+  #define COPY  0x53
   #define FADD  0x60
   #define FSUB  0x61
   #define FMUL  0x62
@@ -195,7 +202,7 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
   #define FGT   0x65
   #define FGE   0x66
   #define FEQ   0x67
-  #define MOV   0xfa
+  #define IMM   0xfa
   #define GOTOL 0xfb
   #define NCALL 0xfc
   #define FOUT  0xfd
@@ -426,7 +433,17 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
       e->heap[e->registers[i.op0] + i.op1] = e->registers[i.op2];
     } NEXT;
     CASE(GET) {
-      e->registers[i.op2] = e->heap[e->registers[i.op0] + i.op1];
+      e->registers[i.op0] = e->heap[e->registers[i.op1] + i.op2];
+    } NEXT;
+    CASE(COPY) {
+      auto offset = e->heap.size();
+      for (uint8_t u = 0; u < i.op2; u++) e->heap.push_back(0); // e->heap.reserve(offset + i.op2);
+      std::copy(
+        e->heap.begin() + e->registers[i.op1],
+        e->heap.begin() + e->registers[i.op1] + i.op2,
+        e->heap.begin() + offset
+        );
+      e->registers[i.op0] = offset;
     } NEXT;
 
     CASE(FADD) {
@@ -466,7 +483,7 @@ uint8_t virtual_execute(uint32_t* vm, env* e, uint32_t entry_point) {
     } NEXT;
 
     // macros TODO be replaced with rcwtlib
-    CASE(MOV) {
+    CASE(IMM) {
       e->registers[i.op0] = (i.op1 << 8) + i.op2;
     } NEXT;
     CASE(GOTOL) {

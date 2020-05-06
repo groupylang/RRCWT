@@ -18,7 +18,7 @@ typedef struct {
 } env;
 
 extern "C" {
-  uint8_t virtual_execute(uint32_t*, env*, uint32_t);
+  uint8_t virtual_execute(env*, uint32_t);
   // push into stack
   void push(env*, uint32_t);
   // pop out of stack

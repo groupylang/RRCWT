@@ -34,28 +34,28 @@ inline void show_array32(std::ofstream& fout, const uint32_t* begin, uint32_t si
   }
 }
 
-void debugger(env&& e, uint32_t text_size, uint32_t data_size, uint32_t numRegisters) {
+void debugger(env* e, uint32_t text_size, uint32_t data_size, uint32_t numRegisters) {
   while (alive_flag) {
     if (debug_flag) {
       SYNC([] { debug_flag = false; })
       std::ofstream fout(format("tmp/dump_%s.txt", strNow()));
 
-      fout << "text: "      << std::endl; show_array8(fout, e.text, text_size);
-      fout << "data: "      << std::endl; show_array8(fout, e.data, data_size);
-      fout << "registers: " << std::endl; show_array32(fout, e.registers, numRegisters);
+      fout << "text: "      << std::endl; show_array8(fout, e->text, text_size);
+      fout << "data: "      << std::endl; show_array8(fout, e->data, data_size);
+      fout << "registers: " << std::endl; show_array32(fout, e->registers, numRegisters);
       fout << std::endl
            << "stack:" << std::endl;
-      for (auto dword: e.stack) {
+      for (auto dword: e->stack) {
         fout << format("%08x", dword) << std::endl;
       }
       fout << std::endl
            << "heap:" << std::endl;
-      for (auto dword: e.heap) {
+      for (auto dword: e->heap) {
         fout << format("%08x", dword) << std::endl;
       }
       fout << std::endl
-           << "stack pointer: " << format("%08x", e.stack_pointer) << std::endl
-           << "base pointer: "  << format("%08x", e.base_pointer)  << std::endl;
+           << "stack pointer: " << format("%08x", e->stack_pointer) << std::endl
+           << "base pointer: "  << format("%08x", e->base_pointer)  << std::endl;
       fout.flush();
     }
   }
