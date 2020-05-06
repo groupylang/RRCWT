@@ -1,7 +1,14 @@
-.SILENT: build clean build_java build_rust
-.PHONY: build clean build_java build_rust
+.SILENT: prepare build clean build_java build_rust
+.PHONY: prepare build clean build_java build_rust
 
-build: build_java build_rust
+prepare:
+ifeq ($(OS), Windows_NT)
+	-md javaout > NUL 2>&1
+else
+	mkdir -p javaout
+endif
+	
+build: prepare build_java build_rust
 ifeq ($(OS), Windows_NT)
 	-copy /B /Y target/debug/driver.exe rrcwt.exe
 else
