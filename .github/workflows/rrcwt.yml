@@ -10,6 +10,10 @@ jobs:
   build_on_ubuntu:
     runs-on: ubuntu-latest
     steps:
+    - name: Setup Java JDK
+      uses: actions/setup-java@v1.3.0
+      with:
+        java-version: 1.8
     - uses: actions/checkout@v2
     - name: build
       run: make build
@@ -18,6 +22,10 @@ jobs:
   build_on_windows:
     runs-on: windows-latest
     steps:
+    - name: Setup Java JDK
+      uses: actions/setup-java@v1.3.0
+      with:
+        java-version: 1.8
     - uses: actions/checkout@v2
     - name: build
       run: make build
