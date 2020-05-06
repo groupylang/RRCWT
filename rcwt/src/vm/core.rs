@@ -21,13 +21,21 @@ impl VirtualMachine {
     extern "C" {
       /// @C env* env_new(uint8_t*, uint8_t*, uint32_t);
       fn env_new(text: *const u8, data: *const u8, numRegisters: u32) -> *const env;
-      /// @C uint8_t virtual_execute(uint32_t*, env*, uint32_t);
-      fn virtual_execute(vm: *const u32, e: *const env, entry_point: u32) -> u8;
+      /// @C uint8_t virtual_execute_wrapper(env*, uint32_t, uint32_t, uint32_t, uint32_t);
+      fn virtual_execute_wrapper(e: *const env, text_size: u32, data_size: u32, num_registers: u32, entry_point: u32) -> u8;
     }
-    let status = unsafe {
-      let e = env_new((*self.text).as_ptr(), (*self.data).as_ptr(), 1024);
-      virtual_execute(self as *const VirtualMachine as *const u32, e, self.program_counter as u32)
-    };
+    let e = unsafe { env_new(
+      /* text          */ (*self.text).as_ptr(),
+      /* data          */ (*self.data).as_ptr(),
+      /* num registers */ 32,
+    )};
+    let status = unsafe { virtual_execute_wrapper(
+      /* e             */ e,
+      /* text size     */ self.text.len() as u32,
+      /* data size     */ self.data.len() as u32,
+      /* num registers */ 32,
+      /* entry point   */ self.program_counter as u32,
+    )};
     println!();
     println!("log | VMExitWithStatus: {}", status);
   }
