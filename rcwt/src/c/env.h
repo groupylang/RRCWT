@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
+#include <unordered_map>
 
 typedef struct {
   uint8_t* text;
@@ -15,14 +16,22 @@ typedef struct {
   std::vector<uint32_t> heap;
   uint32_t stack_pointer;
   uint32_t base_pointer;
+} cenv;
+
+typedef void(*procedure)(cenv*);
+
+typedef struct {
+  cenv e;
+  std::unordered_map<size_t, uint32_t> hot_spots;
+  std::unordered_map<size_t, procedure> procs;
 } env;
 
 extern "C" {
   uint8_t virtual_execute(env*, uint32_t);
   // push into stack
-  void push(env*, uint32_t);
+  void push(cenv*, uint32_t);
   // pop out of stack
-  uint32_t pop(env*);
+  uint32_t pop(cenv*);
 }
 
 #endif

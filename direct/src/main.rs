@@ -1,3 +1,4 @@
+//! direct access to RCWT virtual machine
 extern crate serde;
 
 use serde::{Deserialize, Serialize};
@@ -7,7 +8,7 @@ use std::fs::File;
 use std::io;
 use std::io::BufReader;
 use std::time::Instant;
-use std::ffi::CStr;
+use std::ffi::{CString, CStr};
 
 #[allow(non_camel_case_types)]
 enum env {}
@@ -16,7 +17,7 @@ enum env {}
 struct Direct {
   num_registers: Option<u32>,
   entry_point: Option<u32>,
-  natives: Option<Vec<(u32, String)>>,
+  natives: Option<Vec<(usize, String)>>,
   text: Vec<(u8, u8, u8, u8)>,
   data: Option<Vec<String>>,
 }
@@ -27,17 +28,14 @@ fn main() -> io::Result<()> {
   let direct: Direct = serde_yaml::from_reader(reader).expect("error | InvalidYamlFile");
 
   extern "C" {
-    /// @C uint8_t virtual_execute_wrapper(uint32_t, uint8_t*, uint32_t, uint8_t*, uint32_t, uint32_t);
-    fn virtual_execute_wrapper(text_size: u32, text: *const u8, data_size: u32, data: *const u8, num_registers: u32, entry_point: u32) -> u8;
-    // @C void native_load(std::unordered_map<size_t, procedure>&, size_t, std::string);
-    // fn native_load(std::unordered_map<size_t, procedure>&, id: usize, std::string);
+    /// @C env* env_new(uint8_t* text, uint8_t* data, uint32_t numRegisters)
+    fn env_new(text: *const u8, data: *const u8, numRegisters: u32) -> *const env;
+    /// @C void native_load(env*, size_t, const char*);
+    fn native_load_wrapper(e: *const env, index: usize, path: *const i8);
+    /// @C uint8_t virtual_execute_wrapper(env*, uint32_t, uint32_t, uint32_t, uint32_t);
+    fn virtual_execute_wrapper(e: *const env, text_size: u32, data_size: u32, numRegisters: u32, entry_point: u32) -> u8;
   }
 
-  if let Some(vec_natives) = direct.natives {
-    for (id, path) in vec_natives {
-      
-    }
-  }
   let mut data = Vec::new();
   if let Some(vec_data) = direct.data {
     for str_data in vec_data {
@@ -48,15 +46,29 @@ fn main() -> io::Result<()> {
     }
   }
 
+  // allocate and initialize memory
+  let e = unsafe { env_new(
+    /* text          */ direct.text.as_ptr() as *const u8,
+    /* data          */ data.as_ptr() as *const u8,
+    /* num registers */ direct.num_registers.unwrap_or(16)
+  )};
+
+  // load natives
+  if let Some(vec_natives) = direct.natives {
+    for (index, path) in vec_natives {
+      let str_path: &str = &path;
+      unsafe { native_load_wrapper(e, index, CString::new(str_path).unwrap().as_ptr()); }
+    }
+  }
+
   println!("[*] VMEntry");
 
   let timer = Instant::now();
 
   let status = unsafe { virtual_execute_wrapper(
+      /* e             */ e,
       /* text size     */ (direct.text.len() * 4) as u32,
-      /* text          */ direct.text.as_ptr() as *const u8,
       /* data size     */ data.len() as u32,
-      /* data          */ data.as_ptr() as *const u8,
       /* num registers */ direct.num_registers.unwrap_or(16),
       /* entry point   */ direct.entry_point.and_then(|x| Some(x * 4)).unwrap_or(0)
   )};

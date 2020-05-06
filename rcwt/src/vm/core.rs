@@ -19,16 +19,22 @@ impl VirtualMachine {
   pub fn execute(&mut self) {
     #[link(name="core")]
     extern "C" {
-      /// @C uint8_t virtual_execute_wrapper(uint32_t, uint8_t*, uint32_t, uint8_t*, uint32_t, uint32_t);
-       fn virtual_execute_wrapper(text_size: u32, text: *const u8, data_size: u32, data: *const u8, num_registers: u32, entry_point: u32) -> u8;
+      /// @C env* env_new(uint8_t*, uint8_t*, uint32_t);
+      fn env_new(text: *const u8, data: *const u8, numRegisters: u32) -> *const env;
+      /// @C uint8_t virtual_execute_wrapper(env*, uint32_t, uint32_t, uint32_t, uint32_t);
+      fn virtual_execute_wrapper(e: *const env, text_size: u32, data_size: u32, num_registers: u32, entry_point: u32) -> u8;
     }
-    let status = unsafe { virtual_execute_wrapper(
-      /* text size     */ self.text.len() as u32,
+    let e = unsafe { env_new(
       /* text          */ (*self.text).as_ptr(),
-      /* data size     */ self.data.len() as u32,
       /* data          */ (*self.data).as_ptr(),
       /* num registers */ 32,
-      /* entry point   */ self.program_counter as u32
+    )};
+    let status = unsafe { virtual_execute_wrapper(
+      /* e             */ e,
+      /* text size     */ self.text.len() as u32,
+      /* data size     */ self.data.len() as u32,
+      /* num registers */ 32,
+      /* entry point   */ self.program_counter as u32,
     )};
     println!();
     println!("log | VMExitWithStatus: {}", status);
