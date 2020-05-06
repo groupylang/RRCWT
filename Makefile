@@ -19,4 +19,4 @@ endif
 build_java:
 	javac -sourcepath incremental/src -d javaout incremental/src/driver/Driver.java
 build_rust:
-	cargo build
+	cargo build --verbose

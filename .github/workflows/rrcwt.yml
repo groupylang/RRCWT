@@ -2,9 +2,9 @@ name: RRCWT
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, develop ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, develop ]
 
 jobs:
   build_on_ubuntu:
@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: build
-      run: cargo build --verbose
+      run: make build
     - name: test
       run: cargo test --verbose
   build_on_windows:
@@ -20,6 +20,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: build
-      run: cargo build --verbose
+      run: make build
     - name: test
       run: cargo test --verbose
