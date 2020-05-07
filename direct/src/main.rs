@@ -1,4 +1,4 @@
-//! direct access to RCWT virtual machine
+//! direct invocation of RCWT virtual machine
 extern crate serde;
 
 use serde::{Deserialize, Serialize};
@@ -10,9 +10,11 @@ use std::io::BufReader;
 use std::time::Instant;
 use std::ffi::{CString, CStr};
 
+/// virtual environment including registers, stack, heap, etc
 #[allow(non_camel_case_types)]
 enum env {}
 
+/// information for direct invocation of virtual machine
 #[derive(Serialize, Deserialize, Debug)]
 struct Direct {
   num_registers: Option<u32>,
@@ -42,7 +44,7 @@ fn main() -> io::Result<()> {
       for byte in str_data.as_bytes() {
         data.push(*byte);
       }
-      data.push(0);
+      data.push(0); // string in C should be terminated by null-byte
     }
   }
 

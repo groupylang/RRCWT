@@ -36,12 +36,16 @@ env* env_new(uint8_t* text, uint8_t* data, uint32_t numRegisters) {
   auto e = new env;
   e->hot_spots = std::unordered_map<size_t, uint32_t>();
   e->hot_spots.reserve(32);
-  e->procs = std::unordered_map<size_t, procedure>();
-  e->procs.reserve(32);
+  e->natives = std::unordered_map<size_t, procedure>();
+  e->natives.reserve(32);
   auto ce = reinterpret_cast<cenv*>(e);
   ce->text          = text;
   ce->data          = data;
   ce->registers     = reinterpret_cast<uint32_t*>(calloc(numRegisters, 4));
+  if (!ce->registers) {
+    std::cout << "error | OutOfMemory: not enough memory for registers" << std::endl;
+    exit(1);
+  }
   ce->stack         = vector_new();
   ce->heap          = vector_new();
   ce->stack_pointer = 0;
@@ -392,7 +396,7 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
     } NEXT;
     CASE(CALL) {
       jit_flag = is_hot(e->hot_spots, reinterpret_cast<size_t>(pc));
-      if (jit_flag == 2) { native_execute(e->procs, reinterpret_cast<size_t>(pc), ce); NEXT; }
+      if (jit_flag == 2) { native_execute(e->natives, reinterpret_cast<size_t>(pc), ce); NEXT; }
       push(ce, ce->base_pointer); // save bp to stack
       ce->base_pointer = ce->stack_pointer;
       ce->stack_pointer += i.op0; // allocate locals
@@ -407,7 +411,7 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
       // jit
       if (jit_flag) {
         jit_str += "\treturn;\n}\n";
-        jit_asm(*e, reinterpret_cast<size_t>(pc - 1), jit_str.c_str());
+        jit_compile(*e, reinterpret_cast<size_t>(pc - 1), jit_str.c_str());
         jit_flag = 0;
       }
       ce->stack_pointer = ce->base_pointer; // free locals
@@ -489,7 +493,7 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
       pc += (i.op0 << 16) + (i.op1 << 8) + i.op2;
     } JUMP;
     CASE(NCALL) {
-      native_execute(e->procs, reinterpret_cast<size_t>(pc), ce);
+      native_execute(e->natives, reinterpret_cast<size_t>(pc), ce);
     } NEXT;
     CASE(FOUT) {
       print_float(*reinterpret_cast<float*>(ce->registers + i.op0));

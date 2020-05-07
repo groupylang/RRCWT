@@ -15,7 +15,7 @@ impl VirtualMachine {
     scanner.load(file_name);
     scanner.setup()
   }
-  /// wrapper of virtual_execute()
+  /// wrapper of virtual_execute_wrapper()
   pub fn execute(&mut self) {
     #[link(name="core")]
     extern "C" {
@@ -136,7 +136,7 @@ impl VirtualMachine {
       }
     }
   }
-  /// execute native function
+  /// execute native procedure
   #[no_mangle]
   pub fn native_execute(&mut self, pc: *const u32, e: &env) {
     self.procedures.get(&(pc as usize)).expect(&format!("error | ProcedureNotFound: {}", pc as usize))(e);

@@ -23,7 +23,7 @@ typedef void(*procedure)(cenv*);
 typedef struct {
   cenv e;
   std::unordered_map<size_t, uint32_t> hot_spots;
-  std::unordered_map<size_t, procedure> procs;
+  std::unordered_map<size_t, procedure> natives;
 } env;
 
 extern "C" {

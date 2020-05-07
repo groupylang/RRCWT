@@ -13,10 +13,11 @@ uint8_t is_hot(std::unordered_map<size_t, uint32_t>& hot_spots, size_t pc) {
   else { return 1; }
 }
 
-void jit_asm(env& e, size_t id, const char* jit_str) {
+void jit_compile(env& e, size_t id, const char* jit_str) {
   std::ofstream fout(format("tmp/jit%zu.cpp", id).c_str());
   fout << jit_str;
   fout.flush();
+  // compile
 #if defined(_WIN32) || defined(_WIN64)
   system(format("clang++ tmp/jit%zu.cpp -o tmp/jit%zu.dll -Wall -Wextra -g -shared -fPIC", id, id).c_str());
   native_load(&e, id, "tmp/jit%zu.dll");
@@ -39,8 +40,8 @@ void native_load(env* e, size_t id, const char* path) {
   auto handle = dlopen(path, RTLD_LAZY);
   auto f = reinterpret_cast<procedure>(dlsym(handle, "f"));
 #endif
-  e->procs[id] = f;
+  e->natives[id] = f;
 }
-void native_execute(std::unordered_map<size_t, procedure>& procs, size_t id, cenv* e) {
-  procs[id](e);
+void native_execute(std::unordered_map<size_t, procedure>& natives, size_t id, cenv* e) {
+  natives[id](e);
 }

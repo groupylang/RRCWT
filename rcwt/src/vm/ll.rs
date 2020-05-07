@@ -158,7 +158,7 @@ impl Scanner {
     // TODO verify
     // patch
     for r in &self.relocations {
-      let s = self.symbols.get(&r.symbol_name).expect(&format!("SymbolNotFound: {}", &r.symbol_name));
+      let s = self.symbols.get(&r.symbol_name).expect(&format!("error | SymbolNotFound: {}", &r.symbol_name));
       match r.segment_id {
         0 => self.text[r.base_address] = s.base_address as u8,
         1 => self.data[r.base_address] = s.base_address as u8,
@@ -180,7 +180,7 @@ impl Scanner {
 
 type CString = String;
 
-/// wrapper of BufReader
+/// wrapper of BufReader to read binary files
 pub struct BinaryReader {
   reader: BufReader<File>
 }
@@ -191,6 +191,7 @@ impl BinaryReader {
       reader: BufReader::new(File::open(extended).expect(&format!("error | FileNotFound: {}", extended)))
     }
   }
+  /// read to end and convert to Vec<u8>
   #[allow(dead_code)]
   fn read_to_end(&mut self) -> io::Result<Vec<u8>> {
     let mut buf = Vec::with_capacity(32);

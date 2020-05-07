@@ -27,7 +27,7 @@ extern "C" {
 // count how many times vm calls the virtual function and check if it is hot
 uint8_t is_hot(std::unordered_map<size_t, uint32_t>&, size_t);
 // just-in-time assemble (dll/so) and load
-void jit_asm(env&, size_t, const char*);
+void jit_compile(env&, size_t, const char*);
 void native_load(env*, size_t, const char*);
 void native_execute(std::unordered_map<size_t, procedure>&, size_t, cenv*);
 template <typename ... Args>
