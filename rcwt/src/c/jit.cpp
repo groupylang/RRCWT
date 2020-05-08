@@ -28,8 +28,7 @@ void jit_compile(env& e, size_t id, const char* jit_str) {
 }
 
 void native_load_wrapper(env* e, size_t index, const char* path) {
-  auto ce = reinterpret_cast<cenv*>(e);
-  native_load(e, reinterpret_cast<size_t>(ce->text + index * 4), path);
+  native_load(e, reinterpret_cast<size_t>(e->text + index * 4), path);
 }
 
 void native_load(env* e, size_t id, const char* path) {
@@ -42,6 +41,6 @@ void native_load(env* e, size_t id, const char* path) {
 #endif
   e->natives[id] = f;
 }
-void native_execute(std::unordered_map<size_t, procedure>& natives, size_t id, cenv* e) {
+void native_execute(std::unordered_map<size_t, procedure>& natives, size_t id, env* e) {
   natives[id](e);
 }

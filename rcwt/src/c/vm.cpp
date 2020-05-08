@@ -38,18 +38,17 @@ env* env_new(uint8_t* text, uint8_t* data, uint32_t numRegisters) {
   e->hot_spots.reserve(32);
   e->natives = std::unordered_map<size_t, procedure>();
   e->natives.reserve(32);
-  auto ce = reinterpret_cast<cenv*>(e);
-  ce->text          = text;
-  ce->data          = data;
-  ce->registers     = reinterpret_cast<uint32_t*>(calloc(numRegisters, 4));
-  if (!ce->registers) {
+  e->text          = text;
+  e->data          = data;
+  e->registers     = reinterpret_cast<uint32_t*>(calloc(numRegisters, 4));
+  if (!e->registers) {
     std::cout << "error | OutOfMemory: not enough memory for registers" << std::endl;
     exit(1);
   }
-  ce->stack         = vector_new();
-  ce->heap          = vector_new();
-  ce->stack_pointer = 0;
-  ce->base_pointer  = 0;
+  e->stack         = vector_new();
+  e->heap          = vector_new();
+  e->stack_pointer = 0;
+  e->base_pointer  = 0;
   return e;
 }
 
@@ -57,7 +56,6 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
   // initialize
   uint8_t jit_flag = 0;
   std::string jit_str = std::string();
-  auto ce = reinterpret_cast<cenv*>(e);
   // execute
 // direct threading
 #if defined __GNUC__ || defined __clang__ || defined __INTEL_COMPILER
@@ -74,7 +72,7 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
   #define END_DISPATCH }}
 #endif
 
-  auto pc = reinterpret_cast<instruction*>(ce->text + entry_point);
+  auto pc = reinterpret_cast<instruction*>(e->text + entry_point);
   instruction i;
 
 #if defined __GNUC__ || defined __clang__ || defined __INTEL_COMPILER
@@ -224,147 +222,147 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
     } NEXT;
 
     CASE(STORE) {
-      ce->stack[ce->base_pointer + i.op0] = ce->registers[i.op1];
+      e->stack[e->base_pointer + i.op0] = e->registers[i.op1];
       if (jit_flag) {
         jit_str += format("\te->stack[e->base_pointer + %d] = e->registers[%d];\n", i.op0, i.op1);
       }
     } NEXT;
     CASE(LOAD) {
-      ce->registers[i.op0] = ce->stack[ce->base_pointer + i.op1];
+      e->registers[i.op0] = e->stack[e->base_pointer + i.op1];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->stack[e->base_pointer + %d];\n", i.op0, i.op1);
       }
     } NEXT;
     CASE(PUSH) {
-      push(ce, ce->registers[i.op0]);
+      push(e, e->registers[i.op0]);
     } NEXT;
     CASE(POP) {
-      ce->registers[i.op0] = pop(ce);
+      e->registers[i.op0] = pop(e);
     } NEXT;
 
     CASE(ADDR) {
-      ce->registers[i.op0] = ce->registers[i.op1] + ce->registers[i.op2];
+      e->registers[i.op0] = e->registers[i.op1] + e->registers[i.op2];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] + e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(SUBR) {
-      ce->registers[i.op0] = ce->registers[i.op1] - ce->registers[i.op2];
+      e->registers[i.op0] = e->registers[i.op1] - e->registers[i.op2];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] - e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(MULR) {
-      ce->registers[i.op0] = ce->registers[i.op1] * ce->registers[i.op2];
+      e->registers[i.op0] = e->registers[i.op1] * e->registers[i.op2];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] * e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(DIVR) {
-      ce->registers[i.op0] = ce->registers[i.op1] / ce->registers[i.op2];
+      e->registers[i.op0] = e->registers[i.op1] / e->registers[i.op2];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] / e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(REMR) {
-      ce->registers[i.op0] = ce->registers[i.op1] % ce->registers[i.op2];
+      e->registers[i.op0] = e->registers[i.op1] % e->registers[i.op2];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] % e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(GT) {
-      ce->registers[i.op0] = ce->registers[i.op1] > ce->registers[i.op2];
+      e->registers[i.op0] = e->registers[i.op1] > e->registers[i.op2];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] > e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(GE) {
-      ce->registers[i.op0] = ce->registers[i.op1] >= ce->registers[i.op2];
+      e->registers[i.op0] = e->registers[i.op1] >= e->registers[i.op2];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] >= e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(EQ) {
-      ce->registers[i.op0] = ce->registers[i.op1] == ce->registers[i.op2];
+      e->registers[i.op0] = e->registers[i.op1] == e->registers[i.op2];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] == e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(AND) {
-      ce->registers[i.op0] = ce->registers[i.op1] && ce->registers[i.op2];
+      e->registers[i.op0] = e->registers[i.op1] && e->registers[i.op2];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] && e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(OR) {
-      ce->registers[i.op0] = ce->registers[i.op1] || ce->registers[i.op2];
+      e->registers[i.op0] = e->registers[i.op1] || e->registers[i.op2];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] || e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(NOT) {
-      ce->registers[i.op0] = !ce->registers[i.op1];
+      e->registers[i.op0] = !e->registers[i.op1];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = !e->registers[%d];\n", i.op0, i.op1);
       }
     } NEXT;
     CASE(XOR) {
-      ce->registers[i.op0] = ce->registers[i.op1] ^ ce->registers[i.op2];
+      e->registers[i.op0] = e->registers[i.op1] ^ e->registers[i.op2];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] ^ e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(SHL) {
-      ce->registers[i.op0] = ce->registers[i.op1] << ce->registers[i.op2];
+      e->registers[i.op0] = e->registers[i.op1] << e->registers[i.op2];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] << e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(SHR) {
-      ce->registers[i.op0] = ce->registers[i.op1] >> ce->registers[i.op2];
+      e->registers[i.op0] = e->registers[i.op1] >> e->registers[i.op2];
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] >> e->registers[%d];\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
 
     CASE(ADDI) {
-      ce->registers[i.op0] = ce->registers[i.op1] + i.op2;
+      e->registers[i.op0] = e->registers[i.op1] + i.op2;
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] + %d;\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(SUBI) {
-      ce->registers[i.op0] = ce->registers[i.op1] - i.op2;
+      e->registers[i.op0] = e->registers[i.op1] - i.op2;
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] - %d;\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(MULI) {
-      ce->registers[i.op0] = ce->registers[i.op1] * i.op2;
+      e->registers[i.op0] = e->registers[i.op1] * i.op2;
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] * %d;\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(DIVI) {
-      ce->registers[i.op0] = ce->registers[i.op1] / i.op2;
+      e->registers[i.op0] = e->registers[i.op1] / i.op2;
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] / %d;\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(REMI) {
-      ce->registers[i.op0] = ce->registers[i.op1] % i.op2;
+      e->registers[i.op0] = e->registers[i.op1] % i.op2;
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] % %d;\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(SHLI) {
-      ce->registers[i.op0] = ce->registers[i.op1] << i.op2;
+      e->registers[i.op0] = e->registers[i.op1] << i.op2;
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] >> %d;\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
     CASE(SHRI) {
-      ce->registers[i.op0] = ce->registers[i.op1] >> i.op2;
+      e->registers[i.op0] = e->registers[i.op1] >> i.op2;
       if (jit_flag) {
         jit_str += format("\te->registers[%d] = e->registers[%d] << %d;\n", i.op0, i.op1, i.op2);
       }
@@ -372,19 +370,19 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
 
 #if defined __GNUC__ || defined __clang__ || defined __INTEL_COMPILER
     CASE(ADDA) {
-      __sync_fetch_and_add(ce->registers + i.op0, ce->registers[i.op1]);
+      __sync_fetch_and_add(e->registers + i.op0, e->registers[i.op1]);
     } NEXT;
     CASE(SUBA) {
-      __sync_fetch_and_sub(ce->registers + i.op0, ce->registers[i.op1]);
+      __sync_fetch_and_sub(e->registers + i.op0, e->registers[i.op1]);
     } NEXT;
     CASE(ANDA) {
-      __sync_fetch_and_and(ce->registers + i.op0, ce->registers[i.op1]);
+      __sync_fetch_and_and(e->registers + i.op0, e->registers[i.op1]);
     } NEXT;
     CASE(ORA) {
-      __sync_fetch_and_or(ce->registers + i.op0, ce->registers[i.op1]);
+      __sync_fetch_and_or(e->registers + i.op0, e->registers[i.op1]);
     } NEXT;
     CASE(CASA) {
-      __sync_bool_compare_and_swap(ce->registers + i.op0, ce->registers[i.op1], ce->registers[i.op2]);
+      __sync_bool_compare_and_swap(e->registers + i.op0, e->registers[i.op1], e->registers[i.op2]);
     } NEXT;
 #endif
 
@@ -396,113 +394,113 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
     } NEXT;
     CASE(CALL) {
       jit_flag = is_hot(e->hot_spots, reinterpret_cast<size_t>(pc));
-      if (jit_flag == 2) { native_execute(e->natives, reinterpret_cast<size_t>(pc), ce); NEXT; }
-      push(ce, ce->base_pointer); // save bp to stack
-      ce->base_pointer = ce->stack_pointer;
-      ce->stack_pointer += i.op0; // allocate locals
-      push(ce, reinterpret_cast<uint8_t*>(++pc) - ce->text); // save pc to stack
-      pc = reinterpret_cast<instruction*>(ce->text + i.op2);
+      if (jit_flag == 2) { native_execute(e->natives, reinterpret_cast<size_t>(pc), e); NEXT; }
+      push(e, e->base_pointer); // save bp to stack
+      e->base_pointer = e->stack_pointer;
+      e->stack_pointer += i.op0; // allocate locals
+      push(e, reinterpret_cast<uint8_t*>(++pc) - e->text); // save pc to stack
+      pc = reinterpret_cast<instruction*>(e->text + i.op2);
       if (jit_flag) {
-        jit_str += format("#include\"../rcwt/src/c/env.h\"\nextern \"C\" void f(cenv* e) {\n");
+        jit_str += format("#include\"../rcwt/src/c/env.h\"\nextern \"C\" void f(env* e) {\n");
       }
     } JUMP;
     CASE(RET) {
-      pc = reinterpret_cast<instruction*>(ce->text + pop(ce)); // get pc from stack
+      pc = reinterpret_cast<instruction*>(e->text + pop(e)); // get pc from stack
       // jit
       if (jit_flag) {
         jit_str += "\treturn;\n}\n";
         jit_compile(*e, reinterpret_cast<size_t>(pc - 1), jit_str.c_str());
         jit_flag = 0;
       }
-      ce->stack_pointer = ce->base_pointer; // free locals
-      ce->base_pointer = pop(ce); // get bp from stack
+      e->stack_pointer = e->base_pointer; // free locals
+      e->base_pointer = pop(e); // get bp from stack
     } JUMP;
     CASE(IFGT) {
-      if (ce->registers[i.op1] > ce->registers[i.op2]) { pc += i.op0; JUMP; }
+      if (e->registers[i.op1] > e->registers[i.op2]) { pc += i.op0; JUMP; }
     } NEXT;
     CASE(IFGE) {
-      if (ce->registers[i.op1] >= ce->registers[i.op2]) { pc += i.op0; JUMP; }
+      if (e->registers[i.op1] >= e->registers[i.op2]) { pc += i.op0; JUMP; }
     } NEXT;
     CASE(IFEQ) {
-      if (ce->registers[i.op1] == ce->registers[i.op2]) { pc += i.op0; JUMP; }
+      if (e->registers[i.op1] == e->registers[i.op2]) { pc += i.op0; JUMP; }
     } NEXT;
 
     CASE(NEW) {
-      auto offset = ce->heap.size();
-      for (uint8_t u = 0; u < i.op2; u++) ce->heap.push_back(0); // e->heap.reserve(offset + i.op2);
-      ce->registers[i.op0] = offset;
+      auto offset = e->heap.size();
+      for (uint8_t u = 0; u < i.op2; u++) e->heap.push_back(0); // e->heap.reserve(offset + i.op2);
+      e->registers[i.op0] = offset;
     } NEXT;
     CASE(SET) {
-      ce->heap[ce->registers[i.op0] + i.op1] = ce->registers[i.op2];
+      e->heap[e->registers[i.op0] + i.op1] = e->registers[i.op2];
     } NEXT;
     CASE(GET) {
-      ce->registers[i.op0] = ce->heap[ce->registers[i.op1] + i.op2];
+      e->registers[i.op0] = e->heap[e->registers[i.op1] + i.op2];
     } NEXT;
     CASE(COPY) {
-      auto offset = ce->heap.size();
-      for (uint8_t u = 0; u < i.op2; u++) ce->heap.push_back(0); // e->heap.reserve(offset + i.op2);
+      auto offset = e->heap.size();
+      for (uint8_t u = 0; u < i.op2; u++) e->heap.push_back(0); // e->heap.reserve(offset + i.op2);
       std::copy(
-        ce->heap.begin() + ce->registers[i.op1],
-        ce->heap.begin() + ce->registers[i.op1] + i.op2,
-        ce->heap.begin() + offset
+        e->heap.begin() + e->registers[i.op1],
+        e->heap.begin() + e->registers[i.op1] + i.op2,
+        e->heap.begin() + offset
       );
-      ce->registers[i.op0] = offset;
+      e->registers[i.op0] = offset;
     } NEXT;
 
     CASE(FADD) {
-      *reinterpret_cast<float*>(ce->registers + i.op0)
-        = *reinterpret_cast<float*>(ce->registers + i.op1)
-        + *reinterpret_cast<float*>(ce->registers + i.op2);
+      *reinterpret_cast<float*>(e->registers + i.op0)
+        = *reinterpret_cast<float*>(e->registers + i.op1)
+        + *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FSUB) {
-      *reinterpret_cast<float*>(ce->registers + i.op0)
-        = *reinterpret_cast<float*>(ce->registers + i.op1)
-        - *reinterpret_cast<float*>(ce->registers + i.op2);
+      *reinterpret_cast<float*>(e->registers + i.op0)
+        = *reinterpret_cast<float*>(e->registers + i.op1)
+        - *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FMUL) {
-      *reinterpret_cast<float*>(ce->registers + i.op0)
-        = *reinterpret_cast<float*>(ce->registers + i.op1)
-        * *reinterpret_cast<float*>(ce->registers + i.op2);
+      *reinterpret_cast<float*>(e->registers + i.op0)
+        = *reinterpret_cast<float*>(e->registers + i.op1)
+        * *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FDIV) {
-      *reinterpret_cast<float*>(ce->registers + i.op0)
-        = *reinterpret_cast<float*>(ce->registers + i.op1)
-        / *reinterpret_cast<float*>(ce->registers + i.op2);
+      *reinterpret_cast<float*>(e->registers + i.op0)
+        = *reinterpret_cast<float*>(e->registers + i.op1)
+        / *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FGT) {
-      ce->registers[i.op0]
-        = *reinterpret_cast<float*>(ce->registers + i.op1)
-        > *reinterpret_cast<float*>(ce->registers + i.op2);
+      e->registers[i.op0]
+        = *reinterpret_cast<float*>(e->registers + i.op1)
+        > *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FGE) {
-      ce->registers[i.op0]
-        = *reinterpret_cast<float*>(ce->registers + i.op1)
-        >= *reinterpret_cast<float*>(ce->registers + i.op2);
+      e->registers[i.op0]
+        = *reinterpret_cast<float*>(e->registers + i.op1)
+        >= *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
     CASE(FEQ) {
-      ce->registers[i.op0]
-        = *reinterpret_cast<float*>(ce->registers + i.op1)
-        == *reinterpret_cast<float*>(ce->registers + i.op2);
+      e->registers[i.op0]
+        = *reinterpret_cast<float*>(e->registers + i.op1)
+        == *reinterpret_cast<float*>(e->registers + i.op2);
     } NEXT;
 
     // macros TODO be replaced with rcwtlib
     CASE(IMM) {
-      ce->registers[i.op0] = (i.op1 << 8) + i.op2;
+      e->registers[i.op0] = (i.op1 << 8) + i.op2;
     } NEXT;
     CASE(GOTOL) {
       pc += (i.op0 << 16) + (i.op1 << 8) + i.op2;
     } JUMP;
     CASE(NCALL) {
-      native_execute(e->natives, reinterpret_cast<size_t>(pc), ce);
+      native_execute(e->natives, reinterpret_cast<size_t>(pc), e);
     } NEXT;
     CASE(FOUT) {
-      print_float(*reinterpret_cast<float*>(ce->registers + i.op0));
+      print_float(*reinterpret_cast<float*>(e->registers + i.op0));
     } NEXT;
     CASE(IOUT) {
-      print_int(ce->registers[i.op0]);
+      print_int(e->registers[i.op0]);
     } NEXT;
     CASE(SOUT) {
-      print_str(reinterpret_cast<const char*>(ce->data) + ce->registers[i.op0]);
+      print_str(reinterpret_cast<const char*>(e->data) + e->registers[i.op0]);
       if (jit_flag) {
         jit_str += format("\tprintf(\"%s\", e->data + e->registers[%d]);\n", "%s", i.op0);
       }

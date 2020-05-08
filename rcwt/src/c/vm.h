@@ -29,7 +29,7 @@ uint8_t is_hot(std::unordered_map<size_t, uint32_t>&, size_t);
 // just-in-time assemble (dll/so) and load
 void jit_compile(env&, size_t, const char*);
 void native_load(env*, size_t, const char*);
-void native_execute(std::unordered_map<size_t, procedure>&, size_t, cenv*);
+void native_execute(std::unordered_map<size_t, procedure>&, size_t, env*);
 template <typename ... Args>
 inline std::string format(const char fmt[], Args ... args) {
   size_t len = std::snprintf(nullptr, 0, fmt, args ...);

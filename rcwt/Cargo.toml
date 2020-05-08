@@ -5,8 +5,8 @@ authors = ["skyrabbit <iamskyrabbit@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-paste = "0.1.7"
-libloading = "0.5.2"
+paste = "0.1.12"
+libloading = "0.6.2"
 
 [build-dependencies]
 cc = "1.0.52"

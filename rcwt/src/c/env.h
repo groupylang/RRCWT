@@ -8,7 +8,11 @@
 #include <vector>
 #include <unordered_map>
 
-typedef struct {
+typedef struct _env env;
+
+typedef void(*procedure)(env*);
+
+struct _env {
   uint8_t* text;
   const uint8_t* data;
   uint32_t* registers;
@@ -16,22 +20,16 @@ typedef struct {
   std::vector<uint32_t> heap;
   uint32_t stack_pointer;
   uint32_t base_pointer;
-} cenv;
-
-typedef void(*procedure)(cenv*);
-
-typedef struct {
-  cenv e;
   std::unordered_map<size_t, uint32_t> hot_spots;
   std::unordered_map<size_t, procedure> natives;
-} env;
+};
 
 extern "C" {
   uint8_t virtual_execute(env*, uint32_t);
   // push into stack
-  void push(cenv*, uint32_t);
+  void push(env*, uint32_t);
   // pop out of stack
-  uint32_t pop(cenv*);
+  uint32_t pop(env*);
 }
 
 #endif
