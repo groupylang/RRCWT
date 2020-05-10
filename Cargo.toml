@@ -1,2 +1,2 @@
 [workspace]
-members = ["rlisp", "rcwt", "driver", "direct"]
+members = ["rlisp", "rcwt", "driver"]

@@ -10,14 +10,14 @@ endif
 	
 build: prepare build_java build_rust
 ifeq ($(OS), Windows_NT)
-	-copy /B /Y target/debug/driver.exe rrcwt.exe
+	-echo target\debug\driver.exe %%*> rrcwt.bat
 else
 	cp target/debug/driver rrcwt
 endif
 clean:
 ifeq ($(OS), Windows_NT)
 	-rd /q /s tmp
-	-del /Q rrcwt.exe
+	-del /Q rrcwt.bat
 else
 	rm -f -r tmp
 	rm -f rrcwt

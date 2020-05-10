@@ -4,8 +4,7 @@ use rlisp::error::show_trace;
 use rlisp::interpreter::Interpreter;
 use rlisp::compiler::IrCompiler;
 
-use std::io;
-use std::fs;
+use std::{io, fs};
 
 fn help() {
   println!("select a file to compile or 1 option from the ones below:");
