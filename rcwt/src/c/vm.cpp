@@ -4,6 +4,7 @@
 
 #include "vm.h"
 
+/// @arg entry_point offset[byte] from @code e->text should be multiple of 4
 uint8_t virtual_execute_wrapper(
   env* e,
   uint32_t text_size,
@@ -34,17 +35,17 @@ inline std::vector<uint32_t> vector_new() {
 
 env* env_new(uint8_t* text, uint8_t* data, uint32_t numRegisters) {
   auto e = new env;
+  e->registers     = reinterpret_cast<uint32_t*>(calloc(numRegisters, 4));
+  if (!e->registers) {
+    std::cout << "error | OutOfMemory: not enough memory for registers" << std::endl;
+    exit(1);
+  }
   e->hot_spots = std::unordered_map<size_t, uint32_t>();
   e->hot_spots.reserve(32);
   e->natives = std::unordered_map<size_t, procedure>();
   e->natives.reserve(32);
   e->text          = text;
   e->data          = data;
-  e->registers     = reinterpret_cast<uint32_t*>(calloc(numRegisters, 4));
-  if (!e->registers) {
-    std::cout << "error | OutOfMemory: not enough memory for registers" << std::endl;
-    exit(1);
-  }
   e->stack         = vector_new();
   e->heap          = vector_new();
   e->stack_pointer = 0;
@@ -52,6 +53,7 @@ env* env_new(uint8_t* text, uint8_t* data, uint32_t numRegisters) {
   return e;
 }
 
+/// @arg entry_point offset[byte] from @code e->text should be multiple of 4
 uint8_t virtual_execute(env* e, uint32_t entry_point) {
   // initialize
   uint8_t jit_flag = 0;
@@ -436,7 +438,7 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
     CASE(GET) {
       e->registers[i.op0] = e->heap[e->registers[i.op1] + i.op2];
     } NEXT;
-    CASE(COPY) {
+    CASE(COPY) { // COPYH copy heap
       auto offset = e->heap.size();
       for (uint8_t u = 0; u < i.op2; u++) e->heap.push_back(0); // e->heap.reserve(offset + i.op2);
       std::copy(
@@ -446,6 +448,8 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
       );
       e->registers[i.op0] = offset;
     } NEXT;
+    // COPYR copy registers
+    // DUP
 
     CASE(FADD) {
       *reinterpret_cast<float*>(e->registers + i.op0)

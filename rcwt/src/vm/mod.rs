@@ -14,7 +14,7 @@ type Procedure = extern fn(*const env) -> ();
 #[derive(Default)]
 pub struct VirtualMachine {
   hot_spots: HashMap<usize, u32>,
-  procedures: HashMap<usize, Procedure>,
+  natives: HashMap<usize, Procedure>,
   text: Box<[u8]>,
   data: Box<[u8]>,
   program_counter: usize,

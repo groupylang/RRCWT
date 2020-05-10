@@ -13,6 +13,7 @@ uint8_t is_hot(std::unordered_map<size_t, uint32_t>& hot_spots, size_t pc) {
   else { return 1; }
 }
 
+/// @arg id identifier of native procedure = address of virtual procedure's first instruction
 void jit_compile(env& e, size_t id, const char* jit_str) {
   std::ofstream fout(format("tmp/jit%zu.cpp", id).c_str());
   fout << jit_str;
@@ -27,10 +28,12 @@ void jit_compile(env& e, size_t id, const char* jit_str) {
 #endif
 }
 
+/// @arg index index of NCALL instruction which call function in @param path
 void native_load_wrapper(env* e, size_t index, const char* path) {
   native_load(e, reinterpret_cast<size_t>(e->text + index * 4), path);
 }
 
+/// @arg id identifier of native procedure = address of virtual procedure's first instruction
 void native_load(env* e, size_t id, const char* path) {
 #if defined(_WIN32) || defined(_WIN64)
   auto handle = LoadLibraryA(path);
@@ -41,6 +44,8 @@ void native_load(env* e, size_t id, const char* path) {
 #endif
   e->natives[id] = f;
 }
+
+/// @arg id identifier of native procedure = address of virtual procedure's first instruction
 void native_execute(std::unordered_map<size_t, procedure>& natives, size_t id, env* e) {
   natives[id](e);
 }

@@ -69,13 +69,13 @@ fn interp() -> io::Result<()> {
   Ok(())
 }
 
-fn compile(file_name: &str) -> io::Result<()> {
+fn compile(path: &str) -> io::Result<()> {
   use io::{BufRead, BufReader};
   use fs::File;
   let mut compiler = IrCompiler::new();
 
-  let reader = BufReader::new(File::open(format!("{}.lisp", file_name))
-    .expect(&format!("error | FileNotFound: {}.lisp", file_name)));
+  let reader = BufReader::new(File::open(format!("{}.lisp", path))
+    .expect(&format!("error | FileNotFound: {}.lisp", path)));
   let mut lines = reader.lines();
   if let Some(Ok(line)) = lines.next() {
     let ast = match line.parse::<Ast>() {
@@ -92,8 +92,8 @@ fn compile(file_name: &str) -> io::Result<()> {
     use io::{Write, BufWriter};
     use fs::create_dir_all;
     use std::path::Path;
-    create_dir_all(Path::new(&format!("tmp/{}.wc", file_name)).parent().unwrap())?;
-    let mut writer = BufWriter::new(File::create(format!("tmp/{}.wc", file_name))?);
+    create_dir_all(Path::new(&format!("tmp/{}.wc", path)).parent().unwrap())?;
+    let mut writer = BufWriter::new(File::create(format!("tmp/{}.wc", path))?);
     writer.write("RCWT".as_bytes())?;
     writer.write(ir.gen().as_slice())?;
   };

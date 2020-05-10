@@ -9,10 +9,10 @@ use std::process::Command;
 use libloading::{Library, Symbol};
 
 impl VirtualMachine {
-  pub fn scan(file_name: &str) -> io::Result<VirtualMachine> {
+  pub fn scan(path: &str) -> io::Result<VirtualMachine> {
     let mut scanner = Scanner::new();
     scanner.initialize();
-    scanner.load(file_name);
+    scanner.load(path);
     scanner.setup()
   }
   /// wrapper of virtual_execute_wrapper()
@@ -91,7 +91,7 @@ impl VirtualMachine {
         };
         match opt_procedure {
           Ok(procedure) => {
-            self.procedures.insert(pc as usize, *procedure);
+            self.natives.insert(pc as usize, *procedure);
           }
           Err(msg) => {
             println!("{}: `{}`", msg, "f\0")
@@ -124,7 +124,7 @@ impl VirtualMachine {
         };
         match opt_procedure {
           Ok(procedure) => {
-            self.procedures.insert(pc as usize, *procedure);
+            self.natives.insert(pc as usize, *procedure);
           }
           Err(msg) => {
             println!("{}: `{}`", msg, "f\0")
@@ -136,9 +136,9 @@ impl VirtualMachine {
       }
     }
   }
-  /// execute native procedure
+  /// - arg `pc` identifier of native procedure = address of virtual procedure's first instruction
   #[no_mangle]
   pub fn native_execute(&mut self, pc: *const u32, e: &env) {
-    self.procedures.get(&(pc as usize)).expect(&format!("error | ProcedureNotFound: {}", pc as usize))(e);
+    self.natives.get(&(pc as usize)).expect(&format!("error | ProcedureNotFound: {}", pc as usize))(e);
   }
 }

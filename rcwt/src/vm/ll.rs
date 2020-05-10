@@ -100,14 +100,14 @@ impl Scanner {
     self.text = Vec::with_capacity(32);
     self.data = Vec::with_capacity(32);
   }
-  pub fn load(&mut self, file_name: &str) {
-    let mut reader = BinaryReader::open(file_name);
+  pub fn load(&mut self, path: &str) {
+    let mut reader = BinaryReader::open(path);
     let text_offset = self.text.len();
     let data_offset = self.data.len();
     // read
     read! { magic: u32 }
     if magic != 0x52435754 {
-      println!("error | InvalidFile: {}", file_name);
+      println!("error | InvalidFile: {}", path);
       return
     }
     read! {
@@ -185,8 +185,8 @@ pub struct BinaryReader {
   reader: BufReader<File>
 }
 impl BinaryReader {
-  fn open(file_name: &str) -> BinaryReader {
-    let extended = &format!("{}.wc", file_name);
+  fn open(path: &str) -> BinaryReader {
+    let extended = &format!("{}.wc", path);
     BinaryReader {
       reader: BufReader::new(File::open(extended).expect(&format!("error | FileNotFound: {}", extended)))
     }
