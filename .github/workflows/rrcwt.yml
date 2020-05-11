@@ -7,20 +7,11 @@ on:
     branches: [ master, develop ]
 
 jobs:
-  build_on_ubuntu:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Setup Java JDK
-      uses: actions/setup-java@v1.3.0
-      with:
-        java-version: 1.13
-    - uses: actions/checkout@v2
-    - name: build
-      run: make build
-    - name: test
-      run: cargo test --verbose
-  build_on_windows:
-    runs-on: windows-latest
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
     - name: Setup Java JDK
       uses: actions/setup-java@v1.3.0
