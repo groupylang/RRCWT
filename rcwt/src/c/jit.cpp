@@ -21,28 +21,40 @@ void jit_compile(env& e, size_t id, const char* jit_str) {
   // compile
 #if defined(_WIN32) || defined(_WIN64)
   system(format("clang++ tmp/jit%zu.cpp -o tmp/jit%zu.dll -Wall -Wextra -g -shared -fPIC", id, id).c_str());
-  native_load(&e, id, "tmp/jit%zu.dll");
 #elif defined(__linux)
   system(format("clang++ tmp/jit%zu.cpp -o tmp/jit%zu.so -Wall -Wextra -g -shared -fPIC", id, id).c_str());
-  native_load(&e, id, "tmp/jit%zu.so");
 #endif
+  native_load(&e, id, format("tmp/jit%zu", id).c_str(), "f");
 }
 
 /// @arg index index of NCALL instruction which call function in @param path
-void native_load_wrapper(env* e, size_t index, const char* path) {
-  native_load(e, reinterpret_cast<size_t>(e->text + index * 4), path);
+/// @arg name name of native procedure
+void native_load_wrapper(env* e, size_t index, const char* path, const char* name) {
+  native_load(e, reinterpret_cast<size_t>(e->text + index * 4), path, name);
 }
 
 /// @arg id identifier of native procedure = address of virtual procedure's first instruction
-void native_load(env* e, size_t id, const char* path) {
+/// @arg name name of native procedure
+void native_load(env* e, size_t id, const char* path, const char* name) {
 #if defined(_WIN32) || defined(_WIN64)
-  auto handle = LoadLibraryA(path);
-  auto f = reinterpret_cast<procedure>(GetProcAddress(handle, "f"));
+  auto handle = LoadLibraryA(format("%s.dll", path).c_str());
 #elif defined(__linux)
-  auto handle = dlopen(path, RTLD_LAZY);
-  auto f = reinterpret_cast<procedure>(dlsym(handle, "f"));
+  auto handle = dlopen(format("%s.so", path).c_str(), RTLD_LAZY);
 #endif
-  e->natives[id] = f;
+  if (!handle) {
+    std::cout << "error | FileNotFound: " << path << std::endl;
+    exit(1);
+  }
+#if defined(_WIN32) || defined(_WIN64)
+  auto fn = reinterpret_cast<procedure>(GetProcAddress(handle, name));
+#elif defined(__linux)
+  auto fn = reinterpret_cast<procedure>(dlsym(handle, name));
+#endif
+  if (!fn) {
+    std::cout << "error | SymbolNotFound: " << name << std::endl;
+    exit(1);
+  }
+  e->natives[id] = fn;
 }
 
 /// @arg id identifier of native procedure = address of virtual procedure's first instruction

@@ -21,14 +21,14 @@ extern "C" {
   void print_str(const char*);
   void print_float(float);
   env* env_new(uint8_t*, uint8_t*, uint32_t);
-  void native_load_wrapper(env*, size_t, const char*);
+  void native_load_wrapper(env*, size_t, const char*, const char*);
   uint8_t virtual_execute_wrapper(env*, uint32_t, uint32_t, uint32_t, uint32_t);
 }
 // count how many times vm calls the virtual function and check if it is hot
 uint8_t is_hot(std::unordered_map<size_t, uint32_t>&, size_t);
-// just-in-time assemble (dll/so) and load
+// just-in-time compile (dll/so) and load
 void jit_compile(env&, size_t, const char*);
-void native_load(env*, size_t, const char*);
+void native_load(env*, size_t, const char*, const char*);
 void native_execute(std::unordered_map<size_t, procedure>&, size_t, env*);
 template <typename ... Args>
 inline std::string format(const char fmt[], Args ... args) {

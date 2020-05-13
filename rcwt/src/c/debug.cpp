@@ -1,6 +1,5 @@
 #include <chrono>
 #include <fstream>
-#include <iostream>
 #include <iomanip>
 
 #include "vm.h"

@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <vector>
 #include <unordered_map>
+#include <iostream>
 
 typedef struct _env env;
 
@@ -30,6 +31,19 @@ extern "C" {
   void push(env*, uint32_t);
   // pop out of stack
   uint32_t pop(env*);
+  // breakpoint
+  void breakpoint();
 }
+
+#define TEXT(n) e->text[n]
+#define DATA(n) e->data[n]
+#define REGISTERS(n) e->registers[n]
+#define SP e->stack_pointer
+#define BP e->base_pointer
+#define TOP(n) e->stack[SP - n]
+#define LOCAL(n) e->stack[BP + n]
+#define ARG(n) e->stack[BP - n]
+#define PROLOG push(e, BP); BP = SP
+#define EPILOG SP = BP; BP = pop(e)
 
 #endif

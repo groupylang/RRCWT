@@ -90,7 +90,7 @@ enum env {}
 struct Direct {
   num_registers: Option<u32>,
   entry_point: Option<u32>,
-  natives: Option<Vec<(usize, String)>>,
+  natives: Option<Vec<(usize, String, String)>>,
   text: Vec<(u8, u8, u8, u8)>,
   data: Option<Vec<String>>,
 }
@@ -163,7 +163,7 @@ fn main() -> io::Result<()> {
       )
     )
     .subcommand(SubCommand::with_name("direct")
-      .about("Invoce RCWT virtual machine directly")
+      .about("Invokes RCWT virtual machine directly")
       .arg(Arg::with_name("path")
         .help("Path of yaml file")
         .takes_value(true)
@@ -232,8 +232,8 @@ fn main() -> io::Result<()> {
     extern "C" {
       /// @C env* env_new(uint8_t* text, uint8_t* data, uint32_t numRegisters)
       fn env_new(text: *const u8, data: *const u8, numRegisters: u32) -> *const env;
-      /// @C void native_load(env*, size_t, const char*);
-      fn native_load_wrapper(e: *const env, index: usize, path: *const i8);
+      /// @C void native_load_wrapper(env*, size_t, const char*);
+      fn native_load_wrapper(e: *const env, index: usize, path: *const i8, name: *const i8);
       /// @C uint8_t virtual_execute_wrapper(env*, uint32_t, uint32_t, uint32_t, uint32_t);
       fn virtual_execute_wrapper(e: *const env, text_size: u32, data_size: u32, numRegisters: u32, entry_point: u32) -> u8;
     }
@@ -257,9 +257,10 @@ fn main() -> io::Result<()> {
 
     // load natives
     if let Some(vec_natives) = direct.natives {
-      for (index, path) in vec_natives {
+      for (index, path, name) in vec_natives {
         let str_path: &str = &path;
-        unsafe { native_load_wrapper(e, index, CString::new(str_path).unwrap().as_ptr()); }
+        let str_name: &str = &name;
+        unsafe { native_load_wrapper(e, index, CString::new(str_path).unwrap().as_ptr(), CString::new(str_name).unwrap().as_ptr()); }
       }
     }
 
