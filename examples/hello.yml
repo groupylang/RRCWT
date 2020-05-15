@@ -3,6 +3,6 @@ natives: [
   [0, "rcwtlib", "hello"]
 ]
 text: [
-  [0xfc, 0, 0, 0],
+  [0xfc, 0, 0, 0], # ncall
   [0x41, 0, 0, 0]
 ]

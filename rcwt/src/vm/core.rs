@@ -39,18 +39,6 @@ impl VirtualMachine {
     println!();
     println!("log | VMExitWithStatus: {}", status);
   }
-  #[no_mangle]
-  pub fn print_float(arg: f32) {
-    print!("{}", arg);
-  }
-  #[no_mangle]
-  pub fn print_int(arg: u32) {
-    print!("{}", arg);
-  }
-  #[no_mangle]
-  pub fn print_str(arg: *const i8) {
-    print!("{}", unsafe { CStr::from_ptr(arg) }.to_str().expect("error | PrintInvalidString"));
-  }
   /// count how many times vm calls the virtual function and check if it is hot
   #[no_mangle]
   pub fn is_hot(&mut self, pc: *const u32) -> u8 {

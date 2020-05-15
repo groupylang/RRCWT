@@ -124,7 +124,7 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
 
       /* 20 */ &&L_ADDI,  /* 21 */ &&L_SUBI,  /* 22 */ &&L_MULI,  /* 23 */ &&L_DIVI,
       /* 24 */ &&L_REMI,  /* 25 */ &&L_NOP,   /* 26 */ &&L_NOP,   /* 27 */ &&L_NOP,
-      /* 28 */ &&L_NOP,   /* 29 */ &&L_NOP,   /* 2a */ &&L_NOP,   /* 2b */ &&L_NOP,
+      /* 28 */ &&L_ANDI,  /* 29 */ &&L_ORI,   /* 2a */ &&L_NOP,   /* 2b */ &&L_XORI,
       /* 2c */ &&L_SHLI,  /* 2d */ &&L_SHRI,  /* 2e */ &&L_NOP,   /* 2f */ &&L_NOP,
 
       /* 30 */ &&L_ADDA,  /* 31 */ &&L_SUBA,  /* 32 */ &&L_NOP,   /* 33 */ &&L_NOP,
@@ -190,7 +190,7 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
       /* f0 */ &&L_NOP,   /* f1 */ &&L_NOP,   /* f2 */ &&L_NOP,   /* f3 */ &&L_NOP,
       /* f4 */ &&L_NOP,   /* f5 */ &&L_NOP,   /* f6 */ &&L_NOP,   /* f7 */ &&L_NOP,
       /* f8 */ &&L_NOP,   /* f9 */ &&L_NOP,   /* fa */ &&L_IMM,   /* fb */ &&L_GOTOL,
-      /* fc */ &&L_NCALL, /* fd */ &&L_FOUT,  /* fe */ &&L_IOUT,  /* ff */ &&L_SOUT,
+      /* fc */ &&L_NCALL, /* fd */ &&L_NOP,   /* fe */ &&L_NOP,   /* ff */ &&L_NOP,
   };
 #else
   #define NOP   0x00
@@ -218,6 +218,9 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
   #define MULI  0x22
   #define DIVI  0x23
   #define REMI  0x24
+  #define ANDI  0x28
+  #define ORI   0x29
+  #define XORI  0x2b
   #define SHLI  0x2c
   #define SHRI  0x2d
   #define GOTO  0x40
@@ -241,9 +244,6 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
   #define IMM   0xfa
   #define GOTOL 0xfb
   #define NCALL 0xfc
-  #define FOUT  0xfd
-  #define IOUT  0xfe
-  #define SOUT  0xff
 #endif
   try {
   INIT_DISPATCH {
@@ -389,6 +389,24 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
         jit_str += format("\te->registers[%d] = e->registers[%d] % %d;\n", i.op0, i.op1, i.op2);
       }
     } NEXT;
+    CASE(ANDI) {
+      REGISTERS(i.op0) = REGISTERS(i.op1) && i.op2;
+      if (jit_flag) {
+        jit_str += format("\te->registers[%d] = e->registers[%d] && %d;\n", i.op0, i.op1, i.op2);
+      }
+    } NEXT;
+    CASE(ORI) {
+      REGISTERS(i.op0) = REGISTERS(i.op1) || i.op2;
+      if (jit_flag) {
+        jit_str += format("\te->registers[%d] = e->registers[%d] || %d;\n", i.op0, i.op1, i.op2);
+      }
+    } NEXT;
+    CASE(XORI) {
+      REGISTERS(i.op0) = REGISTERS(i.op1) ^ i.op2;
+      if (jit_flag) {
+        jit_str += format("\te->registers[%d] = e->registers[%d] ^ %d;\n", i.op0, i.op1, i.op2);
+      }
+    } NEXT;
     CASE(SHLI) {
       REGISTERS(i.op0) = REGISTERS(i.op1) << i.op2;
       if (jit_flag) {
@@ -528,18 +546,6 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
     } JUMP;
     CASE(NCALL) {
       native_execute(e->natives, reinterpret_cast<size_t>(pc), e);
-    } NEXT;
-    CASE(FOUT) {
-      print_float(*reinterpret_cast<float*>(e->registers + i.op0));
-    } NEXT;
-    CASE(IOUT) {
-      print_int(REGISTERS(i.op0));
-    } NEXT;
-    CASE(SOUT) {
-      print_str(reinterpret_cast<const char*>(e->data) + REGISTERS(i.op0));
-      if (jit_flag) {
-        jit_str += format("\tprintf(\"%s\", e->data + e->registers[%d]);\n", "%s", i.op0);
-      }
     } NEXT;
   } END_DISPATCH;
 

@@ -4,12 +4,14 @@ _RRCWT = rrcwt.bat
 MD = md
 RD = rd /q /s
 RM = del /Q
+DLL = dll
 else
 RRCWT = ./rrcwt
 _RRCWT = rrcwt
 MD = mkdir -p
 RD = rm -f -r
 RM = rm -f
+DLL = so
 endif
 
 .PHONY:build clean test
@@ -25,18 +27,18 @@ else
 endif
 
 clean:
-	$(RD) tmp
-	$(RM) $(_RRCWT)
+	-$(RD) tmp
+	-$(RM) $(_RRCWT)
+	-$(RM) rcwtlib.$(DLL)
 
 test:
+	cargo test --verbose
 	$(RRCWT) direct examples/arith
 	$(RRCWT) direct examples/logic
 	$(RRCWT) direct examples/array
 	$(RRCWT) direct examples/fn
+	$(RRCWT) direct examples/loop
+	$(RRCWT) direct examples/float
 
-lib: driver/lib/hello.cpp driver/lib/io.cpp
-ifeq ($(OS), Windows_NT)
-	clang++ driver/lib/hello.cpp driver/lib/io.cpp -shared -fPIC -Wall -o rcwtlib.dll
-else
-	clang++ driver/lib/hello.cpp driver/lib/io.cpp -shared -fPIC -Wall -o rcwtlib.so
-endif
+lib: rcwt/src/c/env.cpp driver/lib/hello.cpp driver/lib/io.cpp driver/lib/hash.cpp
+	clang++ rcwt/src/c/env.cpp driver/lib/hello.cpp driver/lib/io.cpp driver/lib/hash.cpp -shared -fPIC -Wall -o rcwtlib.$(DLL)

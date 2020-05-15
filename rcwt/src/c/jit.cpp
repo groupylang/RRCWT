@@ -20,9 +20,9 @@ void jit_compile(env& e, size_t id, const char* jit_str) {
   fout.flush();
   // compile
 #if defined(_WIN32) || defined(_WIN64)
-  system(format("clang++ tmp/jit%zu.cpp -o tmp/jit%zu.dll -Wall -Wextra -g -shared -fPIC", id, id).c_str());
+  system(format("clang++ tmp/jit%zu.cpp -o tmp/libjit%zu.dll -Wall -Wextra -g -shared -fPIC", id, id).c_str());
 #elif defined(__linux)
-  system(format("clang++ tmp/jit%zu.cpp -o tmp/jit%zu.so -Wall -Wextra -g -shared -fPIC", id, id).c_str());
+  system(format("clang++ tmp/jit%zu.cpp -o tmp/libjit%zu.so -Wall -Wextra -g -shared -fPIC", id, id).c_str());
 #endif
   native_load(&e, id, format("tmp/jit%zu", id).c_str(), "f");
 }

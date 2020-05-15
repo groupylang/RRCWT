@@ -17,9 +17,6 @@ typedef struct {
 } instruction;
 
 extern "C" {
-  void print_int(uint32_t);
-  void print_str(const char*);
-  void print_float(float);
   env* env_new(uint8_t*, uint8_t*, uint32_t);
   void native_load_wrapper(env*, size_t, const char*, const char*);
   uint8_t virtual_execute_wrapper(env*, uint32_t, uint32_t, uint32_t, uint32_t);
