@@ -1,6 +1,6 @@
 num_registers: 1
 natives: [
-  [0, "rcwtlib", "hello"]
+  [0, "librcwt", "hello"]
 ]
 text: [
   [0xfc, 0, 0, 0], # ncall

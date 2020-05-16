@@ -1,6 +1,6 @@
 #include <functional>
 
-#include "rcwtlib.h"
+#include "librcwt.h"
 
 void hash_int(env* e) {
   push(e, std::hash<uint32_t>()(ARG(1)));

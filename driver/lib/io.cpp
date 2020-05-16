@@ -1,4 +1,4 @@
-#include "rcwtlib.h"
+#include "librcwt.h"
 
 void print_int(env* e) {
   std::cout << ARG(1);

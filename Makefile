@@ -29,7 +29,7 @@ endif
 clean:
 	-$(RD) tmp
 	-$(RM) $(_RRCWT)
-	-$(RM) rcwtlib.$(DLL)
+	-$(RM) librcwt.$(DLL)
 
 test:
 	cargo test --verbose
@@ -41,4 +41,4 @@ test:
 	$(RRCWT) direct examples/float
 
 lib: rcwt/src/c/env.cpp driver/lib/hello.cpp driver/lib/io.cpp driver/lib/hash.cpp
-	clang++ rcwt/src/c/env.cpp driver/lib/hello.cpp driver/lib/io.cpp driver/lib/hash.cpp -shared -fPIC -Wall -o rcwtlib.$(DLL)
+	clang++ rcwt/src/c/env.cpp driver/lib/hello.cpp driver/lib/io.cpp driver/lib/hash.cpp -shared -fPIC -Wall -o librcwt.$(DLL)
