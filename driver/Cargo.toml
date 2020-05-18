@@ -5,8 +5,8 @@ authors = ["skyrabbit <iamskyrabbit@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-serde = { version = "1.0.106", features = ["derive"] }
-serde_yaml = "0.8.11"
-clap = "2.33.0"
+serde = { version = "1.0.110", features = ["derive"] }
+serde_yaml = "0.8.12"
+clap = "2.33.1"
 rcwt = { path = "../rcwt" }
 rlisp = { path = "../rlisp" }

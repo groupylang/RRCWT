@@ -96,8 +96,8 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
 #if defined __GNUC__ || defined __clang__ || defined __INTEL_COMPILER
   #define INIT_DISPATCH JUMP;
   #define CASE(op) L_ ## op:
-  #define NEXT i=*++pc; goto *table[i.code]
-  #define JUMP i=*pc; goto *table[i.code]
+  #define NEXT i=*++pc; goto *optable[i.code]
+  #define JUMP i=*pc; goto *optable[i.code]
   #define END_DISPATCH
 #else
   #define INIT_DISPATCH for (;;) { i=*pc; switch (i.code) {
@@ -111,7 +111,7 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
   instruction i;
 
 #if defined __GNUC__ || defined __clang__ || defined __INTEL_COMPILER
-  static void* table[] = {
+  static void* optable[] = {
       /* 00 */ &&L_NOP,   /* 01 */ &&L_NOP,   /* 02 */ &&L_DEBUG, /* 03 */ &&L_NOP,
       /* 04 */ &&L_STORE, /* 05 */ &&L_LOAD,  /* 06 */ &&L_PUSH,  /* 07 */ &&L_POP,
       /* 08 */ &&L_NOP,   /* 09 */ &&L_NOP,   /* 0a */ &&L_NOP,   /* 0b */ &&L_NOP,
@@ -422,19 +422,19 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
 
 #if defined __GNUC__ || defined __clang__ || defined __INTEL_COMPILER
     CASE(ADDA) {
-      __sync_fetch_and_add(e->registers + i.op0, REGISTERS(i.op1));
+      __sync_fetch_and_add(&REGISTERS(i.op0), REGISTERS(i.op1));
     } NEXT;
     CASE(SUBA) {
-      __sync_fetch_and_sub(e->registers + i.op0, REGISTERS(i.op1));
+      __sync_fetch_and_sub(&REGISTERS(i.op0), REGISTERS(i.op1));
     } NEXT;
     CASE(ANDA) {
-      __sync_fetch_and_and(e->registers + i.op0, REGISTERS(i.op1));
+      __sync_fetch_and_and(&REGISTERS(i.op0), REGISTERS(i.op1));
     } NEXT;
     CASE(ORA) {
-      __sync_fetch_and_or(e->registers + i.op0, REGISTERS(i.op1));
+      __sync_fetch_and_or(&REGISTERS(i.op0), REGISTERS(i.op1));
     } NEXT;
     CASE(CASA) {
-      __sync_bool_compare_and_swap(e->registers + i.op0, REGISTERS(i.op1), REGISTERS(i.op2));
+      __sync_bool_compare_and_swap(&REGISTERS(i.op0), REGISTERS(i.op1), REGISTERS(i.op2));
     } NEXT;
 #endif
 
@@ -502,39 +502,39 @@ uint8_t virtual_execute(env* e, uint32_t entry_point) {
     // DUP
 
     CASE(FADD) {
-      *reinterpret_cast<float*>(e->registers + i.op0)
-        = *reinterpret_cast<float*>(e->registers + i.op1)
-        + *reinterpret_cast<float*>(e->registers + i.op2);
+      *reinterpret_cast<float*>(&REGISTERS(i.op0))
+        = *reinterpret_cast<float*>(&REGISTERS(i.op1))
+        + *reinterpret_cast<float*>(&REGISTERS(i.op2));
     } NEXT;
     CASE(FSUB) {
-      *reinterpret_cast<float*>(e->registers + i.op0)
-        = *reinterpret_cast<float*>(e->registers + i.op1)
-        - *reinterpret_cast<float*>(e->registers + i.op2);
+      *reinterpret_cast<float*>(&REGISTERS(i.op0))
+        = *reinterpret_cast<float*>(&REGISTERS(i.op1))
+        - *reinterpret_cast<float*>(&REGISTERS(i.op2));
     } NEXT;
     CASE(FMUL) {
-      *reinterpret_cast<float*>(e->registers + i.op0)
-        = *reinterpret_cast<float*>(e->registers + i.op1)
-        * *reinterpret_cast<float*>(e->registers + i.op2);
+      *reinterpret_cast<float*>(&REGISTERS(i.op0))
+        = *reinterpret_cast<float*>(&REGISTERS(i.op1))
+        * *reinterpret_cast<float*>(&REGISTERS(i.op2));
     } NEXT;
     CASE(FDIV) {
-      *reinterpret_cast<float*>(e->registers + i.op0)
-        = *reinterpret_cast<float*>(e->registers + i.op1)
-        / *reinterpret_cast<float*>(e->registers + i.op2);
+      *reinterpret_cast<float*>(&REGISTERS(i.op0))
+        = *reinterpret_cast<float*>(&REGISTERS(i.op1))
+        / *reinterpret_cast<float*>(&REGISTERS(i.op2));
     } NEXT;
     CASE(FGT) {
       REGISTERS(i.op0)
-        = *reinterpret_cast<float*>(e->registers + i.op1)
-        > *reinterpret_cast<float*>(e->registers + i.op2);
+        = *reinterpret_cast<float*>(&REGISTERS(i.op1))
+        > *reinterpret_cast<float*>(&REGISTERS(i.op2));
     } NEXT;
     CASE(FGE) {
       REGISTERS(i.op0)
-        = *reinterpret_cast<float*>(e->registers + i.op1)
-        >= *reinterpret_cast<float*>(e->registers + i.op2);
+        = *reinterpret_cast<float*>(&REGISTERS(i.op1))
+        >= *reinterpret_cast<float*>(&REGISTERS(i.op2));
     } NEXT;
     CASE(FEQ) {
       REGISTERS(i.op0)
-        = *reinterpret_cast<float*>(e->registers + i.op1)
-        == *reinterpret_cast<float*>(e->registers + i.op2);
+        = *reinterpret_cast<float*>(&REGISTERS(i.op1))
+        == *reinterpret_cast<float*>(&REGISTERS(i.op2));
     } NEXT;
 
     // macros TODO be replaced with rcwtlib

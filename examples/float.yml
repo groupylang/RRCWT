@@ -1,0 +1,18 @@
+# memory representation of float depends on endian
+# this example aims at little-endian platform
+num_registers: 16
+text: [
+  [0xfa,  1, 0x04, 0x08],
+  [0x2c,  1,    1,   20], # shli
+  [0xfa,  2, 0x00, 0x04],
+  [0x2c,  2,    2,   28], # shli
+  [0x60,  3,    1,    2], # fadd
+  [0x61,  4,    1,    2], # fsub
+  [0x62,  5,    1,    2], # fmul
+  [0x63,  6,    1,    2], # fdiv
+  [0x65,  7,    1,    2], # fgt
+  [0x66,  8,    1,    2], # fge
+  [0x67,  9,    1,    2], # feq
+  [0x02,  0,    0,    0],
+  [0x41,  0,    0,    0],
+]

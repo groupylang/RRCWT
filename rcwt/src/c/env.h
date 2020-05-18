@@ -35,7 +35,6 @@ extern "C" {
   void breakpoint();
 }
 
-#define TEXT(n) e->text[n]
 #define DATA(n) e->data[n]
 #define REGISTERS(n) e->registers[n]
 #define SP e->stack_pointer
